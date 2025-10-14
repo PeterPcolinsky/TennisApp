@@ -59,6 +59,7 @@ public class ConsoleApp {
             Printer.println("6) Pridaj zápas");
             Printer.println("7) Zobraz všetky zápasy");
             Printer.println("8) Štatistiky hráča");
+            Printer.println("9) Zápasy hráča");
             Printer.println("0) Koniec");
             Printer.println("-----------------");
 
@@ -73,6 +74,7 @@ public class ConsoleApp {
                 case 6 -> addMatch(sc);
                 case 7 -> listMatches();
                 case 8 -> showPlayerStats(sc);
+                case 9 -> showMatchesByPlayer(sc);
                 case 0 -> Printer.println("Koniec. 👋");
                 default -> Printer.println("Neznáma voľba.");
             }
@@ -556,6 +558,52 @@ public class ConsoleApp {
             }
         }
         return false;
+    }
+
+    private void showMatchesByPlayer(Scanner sc) {
+        Printer.println("=== Zápasy hráča ===");
+        Printer.println("Zadaj meno hráča: ");
+        String input = sc.nextLine().trim();
+        if (input.isEmpty()) {
+            Printer.println("⚠️ Meno nesmie byť prázdne.");
+            return;
+        }
+
+        Player player = findPlayerByName(input);
+        if (player == null) {
+            Printer.println("⚠️ Hráč nenájdený: " + input);
+            return;
+        }
+
+        int count = 0;
+        for (Match m : matches) {
+            if (m.getPlayerA() == player || m.getPlayerB() == player) {
+                if (count == 0) {
+                    Printer.println("— Zápasy pre hráča: " + player.getName());
+                }
+                Printer.println((count + 1) + ") " + formatMatchSimple(m));
+                count++;
+            }
+        }
+
+        if (count == 0) {
+            Printer.println("ℹ️ Hráč " + player.getName() + " zatiaľ nemá žiadne zápasy.");
+        }
+    }
+
+    private Player findPlayerByName(String raw) {
+        String target = raw.trim().toLowerCase().replaceAll("\\s+", " ");
+        for (Player p : players) {
+            String n = p.getName() == null ? "" : p.getName().trim().toLowerCase().replaceAll("\\s+", " ");
+            if (n.equals(target)) return p;
+        }
+        return null;
+    }
+
+    private String formatMatchSimple(Match m) {
+        // Príklad: 2025-05-10 | Peter 6:4, 6:2, 6:2 Novak
+        String date = (m.getDate() == null) ? "----------" : m.getDate().toString();
+        return date + " | " + m.getPlayerA().getName() + " " + m.getScore() + " " + m.getPlayerB().getName();
     }
 
 }
