@@ -4,17 +4,25 @@ import sk.peter.tenis.model.Player;
 import sk.peter.tenis.service.StatsService;
 import sk.peter.tenis.util.Printer;
 import sk.peter.tenis.model.PlayerType;
+import sk.peter.tenis.model.Match;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
-
-import sk.peter.tenis.model.Match;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import java.util.Scanner;
 
 
 public class ConsoleApp {
+
+    // Cesty k CSV súborom
+    private static final Path DATA_DIR = Paths.get("data");
+    private static final Path PLAYERS_CSV = DATA_DIR.resolve("players.csv");
+    private static final Path MATCHES_CSV = DATA_DIR.resolve("matches.csv");
 
     private final List<Player> players = new ArrayList<>();
     private final List<Match> matches = new ArrayList<>();
@@ -22,6 +30,20 @@ public class ConsoleApp {
     public void run() {
         Printer.println("🎾 Vitaj v TenisApp!");
         Printer.println("Cieľ: postupne vybudovať robustnú appku (hráči, zápasy, štatistiky).");
+
+        try {
+            loadPlayersFromCsv();
+            Printer.println("🔄 Načítaných hráčov: " + players.size());
+        } catch (Exception e) {
+            Printer.println("⚠️ Načítanie CSV zlyhalo: " + e.getMessage());
+        }
+
+        try {
+            loadMatchesFromCsv();
+            Printer.println("🔄 Načítaných zápasov: " + matches.size());
+        } catch (Exception e) {
+            Printer.println("⚠️ Načítanie zápasov CSV zlyhalo: " + e.getMessage());
+        }
 
         Scanner sc = new Scanner(System.in);
         int choice = -1;
@@ -81,6 +103,13 @@ public class ConsoleApp {
 
         Player player = new Player(name, age, type);
         players.add(player);
+        try {
+            savePlayersToCsv();
+            Printer.println("💾 Uložené do " + PLAYERS_CSV.toString());
+        } catch (Exception e) {
+            Printer.println("⚠️ Nepodarilo sa uložiť CSV: " + e.getMessage());
+        }
+
         Printer.println("✅ Hráč bol úspešne zaregistrovaný:");
         Printer.println(player.toString());
     }
@@ -173,6 +202,14 @@ public class ConsoleApp {
 
         Match m = new Match(playerA, playerB, score, date);
         matches.add(m);
+
+        try {
+            saveMatchesToCsv();
+            Printer.println("💾 Uložené do " + MATCHES_CSV.toString());
+        } catch (Exception e) {
+            Printer.println("⚠️ Nepodarilo sa uložiť zápasy: " + e.getMessage());
+        }
+
         Printer.println("✅ Zápas pridaný: " + m.toString());
     }
 
@@ -342,5 +379,184 @@ public class ConsoleApp {
         }
         return true;
     }
+
+    private void ensureDataDir() throws Exception {
+        if (!Files.exists(DATA_DIR)) {
+            Files.createDirectories(DATA_DIR);
+        }
+    }
+
+    private void savePlayersToCsv() throws Exception {
+        ensureDataDir();
+        // prepíšeme celý súbor vždy nanovo – jednoduché a bezpečné
+        try (var writer = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
+            // hlavička (voliteľné)
+            writer.write("Meno;Vek;Typ");
+            writer.newLine();
+
+            for (Player p : players) {
+                // meno ani typ neobsahujú ; (validujeme len písmená/medzery)
+                writer.write(p.getName() + ";" + p.getAge() + ";" + p.getType().getDisplayName());
+                writer.newLine();
+            }
+        }
+    }
+
+    private void saveMatchesToCsv() throws Exception {
+        ensureDataDir();
+        try (var writer = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
+            writer.write("HracA;HracB;Vysledok;Datum");
+            writer.newLine();
+
+            for (Match m : matches) {
+                writer.write(m.getPlayerA().getName() + ";" +
+                        m.getPlayerB().getName() + ";" +
+                        m.getScore() + ";" +
+                        m.getDate());
+                writer.newLine();
+            }
+        }
+    }
+
+    private void loadPlayersFromCsv() throws Exception {
+        ensureDataDir();
+
+        // Ak CSV ešte neexistuje, vytvor ho s hlavičkou a skonči
+        if (!Files.exists(PLAYERS_CSV)) {
+            try (var w = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
+                w.write("Meno;Vek;Typ");
+                w.newLine();
+            }
+            return;
+        }
+
+        try (var reader = Files.newBufferedReader(PLAYERS_CSV, StandardCharsets.UTF_8)) {
+            String line;
+            boolean first = true;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) continue;
+
+                // preskoč hlavičku
+                if (first) {
+                    first = false;
+                    if (line.toLowerCase().startsWith("meno;")) continue;
+                }
+
+                String[] parts = line.split(";", -1);
+                if (parts.length < 3) continue;
+
+                String name = parts[0].trim();
+                String ageStr = parts[1].trim();
+                String typeStr = parts[2].trim();
+
+                int age;
+                try {
+                    age = Integer.parseInt(ageStr);
+                } catch (NumberFormatException e) {
+                    // neplatný vek – preskoč riadok
+                    continue;
+                }
+
+                // Podporí "Amatér", "Amater", "Profesionál", "Profesional"
+                var type = sk.peter.tenis.model.PlayerType.fromInput(typeStr);
+                if (type == null) {
+                    // fallback (napr. ak by niekto ručne prepísal CSV)
+                    type = sk.peter.tenis.model.PlayerType.AMATER;
+                }
+
+                // vyhne sa duplicitám podľa mena
+                if (findPlayerByExactName(name) == null) {
+                    players.add(new sk.peter.tenis.model.Player(name, age, type));
+                }
+            }
+        }
+    }
+
+    private void loadMatchesFromCsv() throws Exception {
+        ensureDataDir();
+
+        // Ak CSV neexistuje, vytvor s hlavičkou a skonči
+        if (!Files.exists(MATCHES_CSV)) {
+            try (var w = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
+                w.write("HracA;HracB;Vysledok;Datum");
+                w.newLine();
+            }
+            return;
+        }
+
+        try (var reader = Files.newBufferedReader(MATCHES_CSV, StandardCharsets.UTF_8)) {
+            String line;
+            boolean first = true;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) continue;
+
+                // preskoč hlavičku
+                if (first) {
+                    first = false;
+                    if (line.toLowerCase().startsWith("hraca;")) continue;
+                }
+
+                String[] parts = line.split(";", -1);
+                if (parts.length < 4) continue;
+
+                String nameA = parts[0].trim();
+                String nameB = parts[1].trim();
+                String score = parts[2].trim();
+                String dateStr = parts[3].trim();
+
+                // nájdi hráčov (musia existovať – hráčov načítavame skôr)
+                Player a = findPlayerByExactName(nameA);
+                Player b = findPlayerByExactName(nameB);
+                if (a == null || b == null) {
+                    Printer.println("⚠️ Riadok preskočený – hráč A/B sa nenašiel: " + nameA + " / " + nameB);
+                    continue;
+                }
+
+                // validuj skóre
+                if (!isValidScore(score)) {
+                    Printer.println("⚠️ Riadok preskočený – neplatné skóre: " + score);
+                    continue;
+                }
+
+                // parsuj dátum
+                LocalDate date;
+                try {
+                    date = LocalDate.parse(dateStr);
+                } catch (Exception e) {
+                    Printer.println("⚠️ Riadok preskočený – neplatný dátum: " + dateStr);
+                    continue;
+                }
+
+                // zabráň duplicitám (rovnakí hráči + dátum + skóre; porovnáme aj prehodené poradie)
+                if (matchExists(a, b, score, date)) {
+                    continue;
+                }
+
+                matches.add(new Match(a, b, score, date));
+            }
+        }
+    }
+
+    private boolean matchExists(Player a, Player b, String score, LocalDate date) {
+        for (Match m : matches) {
+            boolean sameOrder =
+                    m.getPlayerA().getName().equalsIgnoreCase(a.getName()) &&
+                            m.getPlayerB().getName().equalsIgnoreCase(b.getName());
+
+            boolean swappedOrder =
+                    m.getPlayerA().getName().equalsIgnoreCase(b.getName()) &&
+                            m.getPlayerB().getName().equalsIgnoreCase(a.getName());
+
+            if ((sameOrder || swappedOrder)
+                    && m.getScore().equalsIgnoreCase(score)
+                    && m.getDate().equals(date)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
 
