@@ -1,5 +1,9 @@
 package sk.peter.tenis.model;
 
+/**
+ * Typ hráča (AMATÉR / PROFESIONÁL) vrátane mapovania z textového vstupu.
+ */
+
 public enum PlayerType {
     AMATER("Amatér"),
     PROFESIONAL("Profesionál");

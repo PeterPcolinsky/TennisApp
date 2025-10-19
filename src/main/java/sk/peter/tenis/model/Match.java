@@ -2,6 +2,10 @@ package sk.peter.tenis.model;
 
 import java.time.LocalDate;
 
+/**
+ * Tenisový zápas: hráč A, hráč B, textové skóre (sety) a dátum.
+ */
+
 public class Match {
     private Player playerA;
     private Player playerB;

@@ -10,27 +10,28 @@ import sk.peter.tenis.service.CsvService;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.util.Scanner;
 
-
 public class ConsoleApp {
-
-    // Cesty k CSV súborom
     private static final Path DATA_DIR = Paths.get("data");
-    private static final Path PLAYERS_CSV = DATA_DIR.resolve("players.csv");
-    private static final Path MATCHES_CSV = DATA_DIR.resolve("matches.csv");
 
+    // In-memory dáta počas behu aplikácie
     private final List<Player> players = new ArrayList<>();
     private final List<Match> matches = new ArrayList<>();
 
+    /**
+     * Hlavná slučka konzolovej aplikácie:
+     * - načíta hráčov a zápasy z CSV (cez CsvService),
+     * - zobrazuje menu a spracúva voľby používateľa.
+     */
     public void run() {
         Printer.println("🎾 Vitaj v TenisApp!");
         Printer.println("Cieľ: postupne vybudovať robustnú appku (hráči, zápasy, štatistiky).");
 
+        // Načítanie hráčov z CSV (CsvService)
         try {
             CsvService.loadPlayers(players);
             Printer.println("🔄 Načítaných hráčov: " + players.size());
@@ -38,6 +39,7 @@ public class ConsoleApp {
             Printer.println("⚠️ Načítanie CSV zlyhalo: " + e.getMessage());
         }
 
+        // Načítanie zápasov z CSV (CsvService)
         try {
             CsvService.loadMatches(matches, players);
             Printer.println("🔄 Načítaných zápasov: " + matches.size());
@@ -48,6 +50,7 @@ public class ConsoleApp {
         Scanner sc = new Scanner(System.in);
         int choice = -1;
 
+        // Hlavné menu
         while (choice != 0) {
             Printer.println("");
             Printer.println("=== MENU ===");
@@ -81,8 +84,11 @@ public class ConsoleApp {
         }
     }
 
-    // ============ VOĽBY MENU ============
+    // ====================== VOĽBY MENU ======================
 
+    /**
+     * Mini demo: vypočíta výhernosť z počtu výhier a prehier.
+     */
     private void calcWinRateDemo(Scanner sc) {
         int wins = readIntInRange(sc, "Zadaj počet výhier: ", 0, 1000);
         int losses = readIntInRange(sc, "Zadaj počet prehier: ", 0, 1000);
@@ -91,8 +97,12 @@ public class ConsoleApp {
         Printer.println("Výhernosť: " + winRate + " %");
     }
 
+    /**
+     * Zaregistruje nového hráča (overenie mena, veku a typu), pridá ho do zoznamu
+     * a uloží aktuálny zoznam hráčov do players.csv (cez CsvService).
+     */
     private void registerPlayer(Scanner sc) {
-        String name = readName(sc, "Zadaj meno hráča: ");                // VALIDÁCIA MENA
+        String name = readName(sc, "Zadaj meno hráča: ");                // validácia mena
         int age = readIntInRange(sc, "Zadaj vek hráča (5–100): ", 5, 100);
         PlayerType type = null;
         while (type == null) {
@@ -107,7 +117,7 @@ public class ConsoleApp {
         players.add(player);
         try {
             CsvService.savePlayers(players);
-            Printer.println("💾 Uložené hráči (players.csv)");
+            Printer.println("💾 Uložené do " + PLAYERS_CSV.toString());
         } catch (Exception e) {
             Printer.println("⚠️ Nepodarilo sa uložiť CSV: " + e.getMessage());
         }
@@ -116,6 +126,9 @@ public class ConsoleApp {
         Printer.println(player.toString());
     }
 
+    /**
+     * Vypíše všetkých hráčov a ich základné údaje.
+     */
     private void listPlayers() {
         Printer.println("=== Zoznam hráčov ===");
         if (players.isEmpty()) {
@@ -129,8 +142,10 @@ public class ConsoleApp {
         }
     }
 
+    /**
+     * Vyhľadá hráča podľa zadanej časti mena (bez ohľadu na veľkosť písmen).
+     */
     private void findPlayerByName(Scanner sc) {
-        // ponecháme možnosť čiastočného hľadania, ale iba písmená/medzery
         String query = readLettersFragment(sc, "Zadaj meno (alebo časť mena): ");
         String q = query.toLowerCase();
 
@@ -149,8 +164,11 @@ public class ConsoleApp {
         }
     }
 
+    /**
+     * Odstráni hráča podľa presného mena (bez ohľadu na veľkosť písmen).
+     */
     private void removePlayerByName(Scanner sc) {
-        String name = readName(sc, "Zadaj meno hráča, ktorého chceš odstrániť: "); // VALIDÁCIA MENA
+        String name = readName(sc, "Zadaj meno hráča, ktorého chceš odstrániť: "); // validácia mena
         boolean removed = players.removeIf(p -> p.getName().equalsIgnoreCase(name));
         if (removed) {
             Printer.println("✅ Hráč " + name + " bol odstránený zo zoznamu.");
@@ -159,21 +177,24 @@ public class ConsoleApp {
         }
     }
 
-    // Adds a new match after simple validation (players exist, not the same person, valid score/date) and persists it.
+    /**
+     * Pridá nový zápas (kontroluje: existenciu hráčov, že nejde o toho istého hráča,
+     * validný formát skóre a dátumu) a uloží zápasy do matches.csv (cez CsvService).
+     */
     private void addMatch(Scanner sc) {
         if (players.size() < 2) {
             Printer.println("⚠️ Potrebuješ aspoň dvoch hráčov, aby si mohol pridať zápas.");
             return;
         }
 
-        String nameA = readName(sc, "Zadaj meno hráča A: "); // VALIDÁCIA MENA
+        String nameA = readName(sc, "Zadaj meno hráča A: "); // validácia mena
         Player playerA = findPlayerByExactName(nameA);
         if (playerA == null) {
             Printer.println("⚠️ Hráč '" + nameA + "' neexistuje. Najprv ho zaregistruj.");
             return;
         }
 
-        String nameB = readName(sc, "Zadaj meno hráča B: "); // VALIDÁCIA MENA
+        String nameB = readName(sc, "Zadaj meno hráča B: "); // validácia mena
         Player playerB = findPlayerByExactName(nameB);
         if (playerB == null) {
             Printer.println("⚠️ Hráč '" + nameB + "' neexistuje. Najprv ho zaregistruj.");
@@ -185,6 +206,7 @@ public class ConsoleApp {
             return;
         }
 
+        // Zadanie a validácia skóre (napr. 6:4, 3:6, 7:6)
         String score;
         while (true) {
             score = readNonEmpty(sc, "Zadaj výsledok (napr. 6:4, 3:6, 7:6): ");
@@ -192,6 +214,7 @@ public class ConsoleApp {
             Printer.println("Skús znova.");
         }
 
+        // Zadanie a validácia dátumu (YYYY-MM-DD)
         LocalDate date;
         while (true) {
             String d = readNonEmpty(sc, "Zadaj dátum (YYYY-MM-DD): ");
@@ -206,9 +229,10 @@ public class ConsoleApp {
         Match m = new Match(playerA, playerB, score, date);
         matches.add(m);
 
+        // Uloženie do CSV (CsvService)
         try {
             CsvService.saveMatches(matches);
-            Printer.println("💾 Uložené do data/matches.csv");
+            Printer.println("💾 Uložené do " + MATCHES_CSV.toString());
         } catch (Exception e) {
             Printer.println("⚠️ Nepodarilo sa uložiť zápasy: " + e.getMessage());
         }
@@ -216,7 +240,9 @@ public class ConsoleApp {
         Printer.println("✅ Zápas pridaný: " + m.toString());
     }
 
-    // Prints all matches from memory in a simple readable format.
+    /**
+     * Vypíše všetky zápasy v jednoduchom formáte.
+     */
     private void listMatches() {
         Printer.println("=== Zoznam zápasov ===");
         if (matches.isEmpty()) {
@@ -230,8 +256,12 @@ public class ConsoleApp {
         }
     }
 
+    /**
+     * Zobrazí základné štatistiky pre konkrétneho hráča:
+     * počet zápasov, výhry/prehry, nedokončené zápasy a výhernosť (len z dokončených).
+     */
     private void showPlayerStats(Scanner sc) {
-        String name = readName(sc, "Meno hráča pre štatistiky: "); // VALIDÁCIA MENA
+        String name = readName(sc, "Meno hráča pre štatistiky: "); // validácia mena
         Player player = findPlayerByExactName(name);
         if (player == null) {
             Printer.println("⚠️ Hráč '" + name + "' neexistuje.");
@@ -266,9 +296,11 @@ public class ConsoleApp {
         Printer.println("Win-rate (len ukončené): " + String.format("%.1f", winRate) + " %");
     }
 
-    // ============ POMOCNÉ METÓDY ============
+    // ====================== POMOCNÉ METÓDY ======================
 
-    // Reads an integer value from console and enforces the given range [min..max].
+    /**
+     * Bezpečne načíta celé číslo v danom rozsahu [min..max] zo vstupu.
+     */
     private int readIntInRange(Scanner sc, String prompt, int min, int max) {
         while (true) {
             Printer.println(prompt);
@@ -286,7 +318,9 @@ public class ConsoleApp {
         }
     }
 
-    // neprázdny reťazec (používame pri políčkach, kde netreba regex)
+    /**
+     * Načíta neprázdny reťazec zo vstupu (použité pre polia, kde netreba špeciálnu validáciu).
+     */
     private String readNonEmpty(Scanner sc, String prompt) {
         while (true) {
             Printer.println(prompt);
@@ -296,7 +330,10 @@ public class ConsoleApp {
         }
     }
 
-    // Reads a non-empty player name (letters and spaces only, normalized).
+    /**
+     * Načíta a overí meno: iba písmená (vrátane diakritiky) a medzery, dĺžka 2–40 znakov.
+     * Medzery normalizuje na jednotnú podobu.
+     */
     private String readName(Scanner sc, String prompt) {
         while (true) {
             Printer.println(prompt);
@@ -309,7 +346,9 @@ public class ConsoleApp {
         }
     }
 
-    // fragment mena pre vyhľadávanie: písmená/medzery, dĺžka 1–40
+    /**
+     * Načíta fragment mena (písmená/medzery 1–40) – používa sa pri vyhľadávaní.
+     */
     private String readLettersFragment(Scanner sc, String prompt) {
         while (true) {
             Printer.println(prompt);
@@ -322,6 +361,9 @@ public class ConsoleApp {
         }
     }
 
+    /**
+     * Nájde hráča podľa presného mena (bez ohľadu na veľkosť písmen); ak neexistuje, vráti null.
+     */
     private Player findPlayerByExactName(String name) {
         for (Player p : players) {
             if (p.getName().equalsIgnoreCase(name)) return p;
@@ -329,12 +371,18 @@ public class ConsoleApp {
         return null;
     }
 
+    /**
+     * Zistí, či sa hráč zúčastnil daného zápasu.
+     */
     private boolean participated(Player p, Match m) {
         return m.getPlayerA().getName().equalsIgnoreCase(p.getName())
                 || m.getPlayerB().getName().equalsIgnoreCase(p.getName());
     }
 
-    // Returns 1 if the given player won the match, 0 if lost, or null if sets are equal (unfinished).
+    /**
+     * Vyhodnotí výsledok zápasu z pohľadu hráča:
+     * - vráti 1 ak hráč vyhral, 0 ak prehral, alebo null ak sú sety vyrovnané (nedokončené).
+     */
     private Integer matchResultFor(Player player, Match m) {
         boolean isA = m.getPlayerA().getName().equalsIgnoreCase(player.getName());
         int setsA = 0;
@@ -355,7 +403,10 @@ public class ConsoleApp {
         return playerWon ? 1 : 0;
     }
 
-    // Validates tennis set scores (6:0–7:6 per set, comma-separated). Returns true if the whole score is valid.
+    /**
+     * Overí platnosť skóre setov (formát X:Y, povolené tenisové výsledky 6:0–7:6).
+     * Skóre je zoznam setov oddelených čiarkou (napr. "6:4, 3:6, 7:6").
+     */
     private boolean isValidScore(String score) {
         String[] sets = score.split(",");
 
@@ -384,33 +435,10 @@ public class ConsoleApp {
         return true;
     }
 
-    private void ensureDataDir() throws Exception {
-        if (!Files.exists(DATA_DIR)) {
-            Files.createDirectories(DATA_DIR);
-        }
-    }
-
-    // Checks if an identical match (same players in any order, same date and score) is already present.
-    private boolean matchExists(Player a, Player b, String score, LocalDate date) {
-        for (Match m : matches) {
-            boolean sameOrder =
-                    m.getPlayerA().getName().equalsIgnoreCase(a.getName()) &&
-                            m.getPlayerB().getName().equalsIgnoreCase(b.getName());
-
-            boolean swappedOrder =
-                    m.getPlayerA().getName().equalsIgnoreCase(b.getName()) &&
-                            m.getPlayerB().getName().equalsIgnoreCase(a.getName());
-
-            if ((sameOrder || swappedOrder)
-                    && m.getScore().equalsIgnoreCase(score)
-                    && m.getDate().equals(date)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Asks for a player name and prints only matches where the player participated.
+    /**
+     * Vypíše zápasy, ktorých sa zúčastnil zadaný hráč (podľa presného mena, case-insensitive).
+     * Ak hráč neexistuje alebo nemá zápasy, vypíše vhodnú správu.
+     */
     private void showMatchesByPlayer(Scanner sc) {
         Printer.println("=== Zápasy hráča ===");
         Printer.println("Zadaj meno hráča: ");
@@ -442,6 +470,9 @@ public class ConsoleApp {
         }
     }
 
+    /**
+     * Nájde hráča podľa mena (normalizované na malé písmená, jedny medzery).
+     */
     private Player findPlayerByName(String raw) {
         String target = raw.trim().toLowerCase().replaceAll("\\s+", " ");
         for (Player p : players) {
@@ -451,10 +482,12 @@ public class ConsoleApp {
         return null;
     }
 
+    /**
+     * Jednoduchý textový formát jedného zápasu: DÁTUM | HráčA SKÓRE HráčB
+     * (napr. 2025-05-10 | Peter 6:4, 6:2, 6:2 Novak)
+     */
     private String formatMatchSimple(Match m) {
-        // Príklad: 2025-05-10 | Peter 6:4, 6:2, 6:2 Novak
         String date = (m.getDate() == null) ? "----------" : m.getDate().toString();
         return date + " | " + m.getPlayerA().getName() + " " + m.getScore() + " " + m.getPlayerB().getName();
     }
 }
-

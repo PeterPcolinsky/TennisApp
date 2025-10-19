@@ -5,6 +5,9 @@ public class Player {
     private int age;
     private PlayerType type;
 
+    /**
+     * Doménový objekt hráča: meno, vek a typ (amatér/profesionál).
+     */
 
     public Player(String name, int age, PlayerType type) {
         this.name = name;

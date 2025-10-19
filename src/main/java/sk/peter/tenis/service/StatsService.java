@@ -1,10 +1,17 @@
 package sk.peter.tenis.service;
 
+/**
+ * Jednoduché štatistiky pre hráčov/zápasy.
+ */
 public class StatsService {
-    // jednoducha sluzba na statistiky - bude sa rozsirovat
+
+    /**
+     * Vypočíta výhernosť v % zo zadaného počtu výhier a prehier.
+     * Ak sú výhry aj prehry nulové, vracia 0.0.
+     */
     public double calcWinRate(int wins, int losses) {
-        int total = wins + losses;
-        if (total == 0) return 0.0;
-        return (wins * 100.0) / total;
+        int finished = wins + losses;
+        if (finished == 0) return 0.0;
+        return (wins * 100.0) / finished;
     }
 }

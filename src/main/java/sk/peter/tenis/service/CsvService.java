@@ -12,9 +12,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * CSV I/O for players and matches (data/*.csv).
- * Players: "Meno;Vek;Typ"
- * Matches: "HracA;HracB;Vysledok;Datum"
+ * CSV I/O služba pre hráčov a zápasy (adresár data/*.csv).
+ * Formáty:
+ * - Players: "Meno;Vek;Typ"
+ * - Matches: "HracA;HracB;Vysledok;Datum"
  */
 public final class CsvService {
 
@@ -24,18 +25,17 @@ public final class CsvService {
 
     private CsvService() { }
 
-    // ============================================================
-    // === PLAYERS =================================================
-    // ============================================================
+    // ====================== PLAYERS ======================
 
     /**
-     * Loads players from players.csv into the in-memory list.
-     * Creates the file with header if missing.
+     * Načíta hráčov z players.csv do cieľového zoznamu.
+     * Ak súbor neexistuje, vytvorí sa s hlavičkou.
+     * Riadky s neplatným vekom preskočí; typ sa mapuje cez PlayerType.fromInput(..).
+     * Duplicitám (podľa mena, case-insensitive) sa zabraňuje.
      */
     public static void loadPlayers(List<Player> target) throws Exception {
         ensureDataDir();
 
-        // Ak CSV ešte neexistuje, vytvor ho s hlavičkou
         if (!Files.exists(PLAYERS_CSV)) {
             try (var w = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
                 w.write("Meno;Vek;Typ");
@@ -68,26 +68,17 @@ public final class CsvService {
                 try {
                     age = Integer.parseInt(ageStr);
                 } catch (NumberFormatException e) {
-                    // neplatný vek – preskoč riadok
+                    // neplatný vek → preskoč
                     continue;
                 }
 
-                // Podporí "Amatér", "Amater", "Profesionál", "Profesional"
                 PlayerType type = PlayerType.fromInput(typeStr);
-                if (type == null) {
-                    // fallback (napr. ak by niekto ručne prepísal CSV)
-                    type = PlayerType.AMATER;
-                }
+                if (type == null) type = PlayerType.AMATER;
 
-                // vyhne sa duplicitám podľa mena
                 boolean exists = false;
                 for (Player p : target) {
-                    if (p.getName().equalsIgnoreCase(name)) {
-                        exists = true;
-                        break;
-                    }
+                    if (p.getName().equalsIgnoreCase(name)) { exists = true; break; }
                 }
-
                 if (!exists) {
                     target.add(new Player(name, age, type));
                 }
@@ -96,16 +87,13 @@ public final class CsvService {
     }
 
     /**
-     * Writes all players from memory into players.csv (overwrites the file).
+     * Zapíše všetkých hráčov z pamäte do players.csv (prepíše celý súbor).
      */
     public static void savePlayers(List<Player> players) throws Exception {
         ensureDataDir();
-
-        // prepíšeme celý súbor vždy nanovo – jednoduché a bezpečné
         try (var writer = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
             writer.write("Meno;Vek;Typ");
             writer.newLine();
-
             for (Player p : players) {
                 writer.write(p.getName() + ";" + p.getAge() + ";" + p.getType().getDisplayName());
                 writer.newLine();
@@ -113,19 +101,16 @@ public final class CsvService {
         }
     }
 
-    // ============================================================
-    // === MATCHES ================================================
-    // ============================================================
+    // ====================== MATCHES ======================
 
     /**
-     * Loads matches from matches.csv into target list.
-     * Validates score format and date, skips invalid rows and duplicates
-     * (duplicate = same players in any order + same score + same date).
+     * Načíta zápasy z matches.csv do cieľového zoznamu.
+     * Overí existenciu hráčov, platnosť skóre aj dátumu.
+     * Duplicitám sa zabraňuje (rovnakí hráči v ľubovoľnom poradí + rovnaké skóre + rovnaký dátum).
      */
     public static void loadMatches(List<Match> target, List<Player> players) throws Exception {
         ensureDataDir();
 
-        // Ak CSV neexistuje, vytvor s hlavičkou
         if (!Files.exists(MATCHES_CSV)) {
             try (var w = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
                 w.write("HracA;HracB;Vysledok;Datum");
@@ -155,19 +140,12 @@ public final class CsvService {
                 String score = parts[2].trim();
                 String dateStr = parts[3].trim();
 
-                // nájdi hráčov
                 Player a = findPlayerByExactName(players, nameA);
                 Player b = findPlayerByExactName(players, nameB);
-                if (a == null || b == null) {
-                    continue;
-                }
+                if (a == null || b == null) continue;
 
-                // validuj skóre
-                if (!isValidScore(score)) {
-                    continue;
-                }
+                if (!isValidScore(score)) continue;
 
-                // parsuj dátum
                 LocalDate date;
                 try {
                     date = LocalDate.parse(dateStr);
@@ -175,10 +153,7 @@ public final class CsvService {
                     continue;
                 }
 
-                // zabráň duplicitám
-                if (matchExists(target, a, b, score, date)) {
-                    continue;
-                }
+                if (matchExists(target, a, b, score, date)) continue;
 
                 target.add(new Match(a, b, score, date));
             }
@@ -186,15 +161,13 @@ public final class CsvService {
     }
 
     /**
-     * Writes all matches from memory into matches.csv (overwrites the file).
+     * Zapíše všetky zápasy z pamäte do matches.csv (prepíše celý súbor).
      */
     public static void saveMatches(List<Match> matches) throws Exception {
         ensureDataDir();
-
         try (var writer = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
             writer.write("HracA;HracB;Vysledok;Datum");
             writer.newLine();
-
             for (Match m : matches) {
                 writer.write(m.getPlayerA().getName() + ";" +
                         m.getPlayerB().getName() + ";" +
@@ -205,10 +178,11 @@ public final class CsvService {
         }
     }
 
-    // ============================================================
-    // === PRIVATE HELPERS ========================================
-    // ============================================================
+    // ====================== POMOCNÉ METÓDY ======================
 
+    /**
+     * Nájde hráča podľa presného mena (case-insensitive). Ak neexistuje, vráti null.
+     */
     private static Player findPlayerByExactName(List<Player> players, String name) {
         for (Player p : players) {
             if (p.getName().equalsIgnoreCase(name)) return p;
@@ -216,42 +190,40 @@ public final class CsvService {
         return null;
     }
 
+    /**
+     * Overí tenisové skóre setov: formát "X:Y" a povolené hodnoty 6:0–7:6.
+     */
     private static boolean isValidScore(String score) {
         String[] sets = score.split(",");
-
         for (String set : sets) {
             set = set.trim();
-            if (!set.matches("\\d:\\d")) {
-                return false;
-            }
+            if (!set.matches("\\d:\\d")) return false;
 
             String[] parts = set.split(":");
-            int gamesA = Integer.parseInt(parts[0]);
-            int gamesB = Integer.parseInt(parts[1]);
+            int a = Integer.parseInt(parts[0]);
+            int b = Integer.parseInt(parts[1]);
 
             boolean valid =
-                    (gamesA == 6 && gamesB <= 4) ||
-                            (gamesB == 6 && gamesA <= 4) ||
-                            (gamesA == 7 && (gamesB == 5 || gamesB == 6)) ||
-                            (gamesB == 7 && (gamesA == 5 || gamesA == 6));
+                    (a == 6 && b <= 4) || (b == 6 && a <= 4) ||
+                            (a == 7 && (b == 5 || b == 6)) ||
+                            (b == 7 && (a == 5 || a == 6));
 
-            if (!valid) {
-                return false;
-            }
+            if (!valid) return false;
         }
         return true;
     }
 
+    /**
+     * Zistí, či rovnocenný zápas už existuje (hráči v ľubovoľnom poradí + rovnaký dátum + skóre).
+     */
     private static boolean matchExists(List<Match> list, Player a, Player b, String score, LocalDate date) {
         for (Match m : list) {
             boolean sameOrder =
                     m.getPlayerA().getName().equalsIgnoreCase(a.getName()) &&
                             m.getPlayerB().getName().equalsIgnoreCase(b.getName());
-
             boolean swappedOrder =
                     m.getPlayerA().getName().equalsIgnoreCase(b.getName()) &&
                             m.getPlayerB().getName().equalsIgnoreCase(a.getName());
-
             if ((sameOrder || swappedOrder)
                     && m.getScore().equalsIgnoreCase(score)
                     && m.getDate().equals(date)) {
@@ -261,6 +233,9 @@ public final class CsvService {
         return false;
     }
 
+    /**
+     * Zabezpečí existenciu adresára data/.
+     */
     private static void ensureDataDir() throws Exception {
         if (!Files.exists(DATA_DIR)) {
             Files.createDirectories(DATA_DIR);
