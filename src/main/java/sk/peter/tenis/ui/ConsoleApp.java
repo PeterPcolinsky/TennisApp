@@ -10,14 +10,10 @@ import sk.peter.tenis.service.CsvService;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import java.util.Scanner;
 
 public class ConsoleApp {
-    private static final Path DATA_DIR = Paths.get("data");
-
     // In-memory dáta počas behu aplikácie
     private final List<Player> players = new ArrayList<>();
     private final List<Match> matches = new ArrayList<>();
@@ -117,7 +113,7 @@ public class ConsoleApp {
         players.add(player);
         try {
             CsvService.savePlayers(players);
-            Printer.println("💾 Uložené do " + PLAYERS_CSV.toString());
+            Printer.println("💾 Hráči boli uložené (players.csv).");
         } catch (Exception e) {
             Printer.println("⚠️ Nepodarilo sa uložiť CSV: " + e.getMessage());
         }
@@ -232,7 +228,7 @@ public class ConsoleApp {
         // Uloženie do CSV (CsvService)
         try {
             CsvService.saveMatches(matches);
-            Printer.println("💾 Uložené do " + MATCHES_CSV.toString());
+            Printer.println("💾 Zápasy boli uložené (matches.csv).");
         } catch (Exception e) {
             Printer.println("⚠️ Nepodarilo sa uložiť zápasy: " + e.getMessage());
         }
