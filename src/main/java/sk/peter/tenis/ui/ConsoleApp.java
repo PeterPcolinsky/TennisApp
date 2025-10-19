@@ -5,11 +5,11 @@ import sk.peter.tenis.service.StatsService;
 import sk.peter.tenis.util.Printer;
 import sk.peter.tenis.model.PlayerType;
 import sk.peter.tenis.model.Match;
+import sk.peter.tenis.service.CsvService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,14 +32,14 @@ public class ConsoleApp {
         Printer.println("Cieľ: postupne vybudovať robustnú appku (hráči, zápasy, štatistiky).");
 
         try {
-            loadPlayersFromCsv();
+            CsvService.loadPlayers(players);
             Printer.println("🔄 Načítaných hráčov: " + players.size());
         } catch (Exception e) {
             Printer.println("⚠️ Načítanie CSV zlyhalo: " + e.getMessage());
         }
 
         try {
-            loadMatchesFromCsv();
+            CsvService.loadMatches(matches, players);
             Printer.println("🔄 Načítaných zápasov: " + matches.size());
         } catch (Exception e) {
             Printer.println("⚠️ Načítanie zápasov CSV zlyhalo: " + e.getMessage());
@@ -106,8 +106,8 @@ public class ConsoleApp {
         Player player = new Player(name, age, type);
         players.add(player);
         try {
-            savePlayersToCsv();
-            Printer.println("💾 Uložené do " + PLAYERS_CSV.toString());
+            CsvService.savePlayers(players);
+            Printer.println("💾 Uložené hráči (players.csv)");
         } catch (Exception e) {
             Printer.println("⚠️ Nepodarilo sa uložiť CSV: " + e.getMessage());
         }
@@ -159,6 +159,7 @@ public class ConsoleApp {
         }
     }
 
+    // Adds a new match after simple validation (players exist, not the same person, valid score/date) and persists it.
     private void addMatch(Scanner sc) {
         if (players.size() < 2) {
             Printer.println("⚠️ Potrebuješ aspoň dvoch hráčov, aby si mohol pridať zápas.");
@@ -206,8 +207,8 @@ public class ConsoleApp {
         matches.add(m);
 
         try {
-            saveMatchesToCsv();
-            Printer.println("💾 Uložené do " + MATCHES_CSV.toString());
+            CsvService.saveMatches(matches);
+            Printer.println("💾 Uložené do data/matches.csv");
         } catch (Exception e) {
             Printer.println("⚠️ Nepodarilo sa uložiť zápasy: " + e.getMessage());
         }
@@ -215,6 +216,7 @@ public class ConsoleApp {
         Printer.println("✅ Zápas pridaný: " + m.toString());
     }
 
+    // Prints all matches from memory in a simple readable format.
     private void listMatches() {
         Printer.println("=== Zoznam zápasov ===");
         if (matches.isEmpty()) {
@@ -266,7 +268,7 @@ public class ConsoleApp {
 
     // ============ POMOCNÉ METÓDY ============
 
-    // bezpečné celé číslo v rozsahu
+    // Reads an integer value from console and enforces the given range [min..max].
     private int readIntInRange(Scanner sc, String prompt, int min, int max) {
         while (true) {
             Printer.println(prompt);
@@ -294,7 +296,7 @@ public class ConsoleApp {
         }
     }
 
-    // meno: len písmená (aj diakritika) a medzery, dĺžka 2–40
+    // Reads a non-empty player name (letters and spaces only, normalized).
     private String readName(Scanner sc, String prompt) {
         while (true) {
             Printer.println(prompt);
@@ -332,7 +334,7 @@ public class ConsoleApp {
                 || m.getPlayerB().getName().equalsIgnoreCase(p.getName());
     }
 
-    // 1 = win, 0 = loss, null = unfinished (rovnosť setov)
+    // Returns 1 if the given player won the match, 0 if lost, or null if sets are equal (unfinished).
     private Integer matchResultFor(Player player, Match m) {
         boolean isA = m.getPlayerA().getName().equalsIgnoreCase(player.getName());
         int setsA = 0;
@@ -353,7 +355,7 @@ public class ConsoleApp {
         return playerWon ? 1 : 0;
     }
 
-    // validácia skóre setov: správny formát a povolené výsledky
+    // Validates tennis set scores (6:0–7:6 per set, comma-separated). Returns true if the whole score is valid.
     private boolean isValidScore(String score) {
         String[] sets = score.split(",");
 
@@ -388,159 +390,7 @@ public class ConsoleApp {
         }
     }
 
-    private void savePlayersToCsv() throws Exception {
-        ensureDataDir();
-        // prepíšeme celý súbor vždy nanovo – jednoduché a bezpečné
-        try (var writer = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
-            // hlavička (voliteľné)
-            writer.write("Meno;Vek;Typ");
-            writer.newLine();
-
-            for (Player p : players) {
-                // meno ani typ neobsahujú ; (validujeme len písmená/medzery)
-                writer.write(p.getName() + ";" + p.getAge() + ";" + p.getType().getDisplayName());
-                writer.newLine();
-            }
-        }
-    }
-
-    private void saveMatchesToCsv() throws Exception {
-        ensureDataDir();
-        try (var writer = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
-            writer.write("HracA;HracB;Vysledok;Datum");
-            writer.newLine();
-
-            for (Match m : matches) {
-                writer.write(m.getPlayerA().getName() + ";" +
-                        m.getPlayerB().getName() + ";" +
-                        m.getScore() + ";" +
-                        m.getDate());
-                writer.newLine();
-            }
-        }
-    }
-
-    private void loadPlayersFromCsv() throws Exception {
-        ensureDataDir();
-
-        // Ak CSV ešte neexistuje, vytvor ho s hlavičkou a skonči
-        if (!Files.exists(PLAYERS_CSV)) {
-            try (var w = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
-                w.write("Meno;Vek;Typ");
-                w.newLine();
-            }
-            return;
-        }
-
-        try (var reader = Files.newBufferedReader(PLAYERS_CSV, StandardCharsets.UTF_8)) {
-            String line;
-            boolean first = true;
-
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) continue;
-
-                // preskoč hlavičku
-                if (first) {
-                    first = false;
-                    if (line.toLowerCase().startsWith("meno;")) continue;
-                }
-
-                String[] parts = line.split(";", -1);
-                if (parts.length < 3) continue;
-
-                String name = parts[0].trim();
-                String ageStr = parts[1].trim();
-                String typeStr = parts[2].trim();
-
-                int age;
-                try {
-                    age = Integer.parseInt(ageStr);
-                } catch (NumberFormatException e) {
-                    // neplatný vek – preskoč riadok
-                    continue;
-                }
-
-                // Podporí "Amatér", "Amater", "Profesionál", "Profesional"
-                var type = sk.peter.tenis.model.PlayerType.fromInput(typeStr);
-                if (type == null) {
-                    // fallback (napr. ak by niekto ručne prepísal CSV)
-                    type = sk.peter.tenis.model.PlayerType.AMATER;
-                }
-
-                // vyhne sa duplicitám podľa mena
-                if (findPlayerByExactName(name) == null) {
-                    players.add(new sk.peter.tenis.model.Player(name, age, type));
-                }
-            }
-        }
-    }
-
-    private void loadMatchesFromCsv() throws Exception {
-        ensureDataDir();
-
-        // Ak CSV neexistuje, vytvor s hlavičkou a skonči
-        if (!Files.exists(MATCHES_CSV)) {
-            try (var w = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
-                w.write("HracA;HracB;Vysledok;Datum");
-                w.newLine();
-            }
-            return;
-        }
-
-        try (var reader = Files.newBufferedReader(MATCHES_CSV, StandardCharsets.UTF_8)) {
-            String line;
-            boolean first = true;
-
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) continue;
-
-                // preskoč hlavičku
-                if (first) {
-                    first = false;
-                    if (line.toLowerCase().startsWith("hraca;")) continue;
-                }
-
-                String[] parts = line.split(";", -1);
-                if (parts.length < 4) continue;
-
-                String nameA = parts[0].trim();
-                String nameB = parts[1].trim();
-                String score = parts[2].trim();
-                String dateStr = parts[3].trim();
-
-                // nájdi hráčov (musia existovať – hráčov načítavame skôr)
-                Player a = findPlayerByExactName(nameA);
-                Player b = findPlayerByExactName(nameB);
-                if (a == null || b == null) {
-                    Printer.println("⚠️ Riadok preskočený – hráč A/B sa nenašiel: " + nameA + " / " + nameB);
-                    continue;
-                }
-
-                // validuj skóre
-                if (!isValidScore(score)) {
-                    Printer.println("⚠️ Riadok preskočený – neplatné skóre: " + score);
-                    continue;
-                }
-
-                // parsuj dátum
-                LocalDate date;
-                try {
-                    date = LocalDate.parse(dateStr);
-                } catch (Exception e) {
-                    Printer.println("⚠️ Riadok preskočený – neplatný dátum: " + dateStr);
-                    continue;
-                }
-
-                // zabráň duplicitám (rovnakí hráči + dátum + skóre; porovnáme aj prehodené poradie)
-                if (matchExists(a, b, score, date)) {
-                    continue;
-                }
-
-                matches.add(new Match(a, b, score, date));
-            }
-        }
-    }
-
+    // Checks if an identical match (same players in any order, same date and score) is already present.
     private boolean matchExists(Player a, Player b, String score, LocalDate date) {
         for (Match m : matches) {
             boolean sameOrder =
@@ -560,6 +410,7 @@ public class ConsoleApp {
         return false;
     }
 
+    // Asks for a player name and prints only matches where the player participated.
     private void showMatchesByPlayer(Scanner sc) {
         Printer.println("=== Zápasy hráča ===");
         Printer.println("Zadaj meno hráča: ");
@@ -605,6 +456,5 @@ public class ConsoleApp {
         String date = (m.getDate() == null) ? "----------" : m.getDate().toString();
         return date + " | " + m.getPlayerA().getName() + " " + m.getScore() + " " + m.getPlayerB().getName();
     }
-
 }
 
