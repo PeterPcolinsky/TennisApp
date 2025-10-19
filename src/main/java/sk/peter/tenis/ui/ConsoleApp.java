@@ -163,13 +163,42 @@ public class ConsoleApp {
     /**
      * Odstráni hráča podľa presného mena (bez ohľadu na veľkosť písmen).
      */
+    /**
+     * Odstráni hráča podľa presného mena (case-insensitive) a
+     * perzistentne uloží zmeny do players.csv. Zároveň zmaže
+     * všetky zápasy, v ktorých hráč vystupoval, a uloží matches.csv.
+     */
     private void removePlayerByName(Scanner sc) {
-        String name = readName(sc, "Zadaj meno hráča, ktorého chceš odstrániť: "); // validácia mena
-        boolean removed = players.removeIf(p -> p.getName().equalsIgnoreCase(name));
-        if (removed) {
-            Printer.println("✅ Hráč " + name + " bol odstránený zo zoznamu.");
-        } else {
+        String name = readName(sc, "Zadaj meno hráča, ktorého chceš odstrániť: ");
+
+        // Nájdeme konkrétny objekt hráča (neodstraňujme, kým ho nemáme)
+        Player player = findPlayerByExactName(name);
+        if (player == null) {
             Printer.println("⚠️ Hráč s menom '" + name + "' sa nenašiel.");
+            return;
+        }
+
+        // 1) Zmažeme všetky jeho zápasy (A alebo B)
+        int removedMatches = removeMatchesOf(player);
+
+        // 2) Zmažeme hráča zo zoznamu
+        boolean removedPlayer = players.removeIf(p -> p.getName().equalsIgnoreCase(name));
+
+        // 3) Uložíme CSV (hráči aj zápasy)
+        try {
+            CsvService.savePlayers(players);
+            CsvService.saveMatches(matches);
+        } catch (Exception e) {
+            Printer.println("⚠️ Chyba pri ukladaní CSV: " + e.getMessage());
+            // aj keď ukladanie zlyhá, v pamäti už odstránené je; používateľa o tom informujeme
+        }
+
+        if (removedPlayer) {
+            Printer.println("✅ Hráč '" + name + "' bol odstránený.");
+            Printer.println("🧹 Zmazané zápasy s týmto hráčom: " + removedMatches);
+        } else {
+            // teoreticky by sme sem už nemali spadnúť, keďže player != null
+            Printer.println("⚠️ Hráča sa nepodarilo odstrániť.");
         }
     }
 
@@ -485,5 +514,19 @@ public class ConsoleApp {
     private String formatMatchSimple(Match m) {
         String date = (m.getDate() == null) ? "----------" : m.getDate().toString();
         return date + " | " + m.getPlayerA().getName() + " " + m.getScore() + " " + m.getPlayerB().getName();
+    }
+
+    /**
+     * Zmaže všetky zápasy, v ktorých sa hráč zúčastnil (ako A alebo B).
+     * @return počet odstránených zápasov
+     */
+    private int removeMatchesOf(Player player) {
+        String target = player.getName();
+        int before = matches.size();
+        matches.removeIf(m ->
+                m.getPlayerA().getName().equalsIgnoreCase(target) ||
+                        m.getPlayerB().getName().equalsIgnoreCase(target)
+        );
+        return before - matches.size();
     }
 }
