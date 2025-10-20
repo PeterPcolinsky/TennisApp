@@ -1,20 +1,23 @@
-# 🎾 TennisApp
+# 🎾 TennisApp (REST API version)
 
-**Console application for managing a tennis club** — keeps track of players, matches, statistics, and results.  
-The goal of this project is to demonstrate the principles of Object-Oriented Programming (OOP) in Java through a practical example.
+**Spring Boot REST API + CSV backend**  
+Application for managing tennis club players.  
+Originally a console project, now extended into a REST API.
 
 ---
 
 ## 🧩 Features
-- Register player (name, age, type: Amateur / Professional)
-- Calculate win-rate
-- Search player by name (full or partial)
-- Remove player
-- Add match (players, score by sets, date)
-- List all matches
-- Player statistics (matches, wins, losses, win-rate)
-- Input validation (e.g., name contains only letters)
-- Clear console menu navigation
+### 👥 Players
+- `GET /api/players` – returns all players  
+- `POST /api/players` – adds a new player  
+- Input validation using `@Valid`  
+- Error handling with JSON responses (`ApiExceptionHandler`)  
+- Data persistence in `data/players.csv`
+
+### 🎾 Matches
+*(coming soon)*  
+- `GET /api/matches` – list matches  
+- `POST /api/matches` – add new match with player validation
 
 ---
 
@@ -22,50 +25,68 @@ The goal of this project is to demonstrate the principles of Object-Oriented Pro
 ```
 src/
  └── main/
-     └── java/
-         └── sk/
-             └── peter/
-                 └── tenis/
-                     ├── model/       → Match, Player, PlayerType
-                     ├── service/     → CsvService, StatsService
-                     ├── ui/          → ConsoleApp
-                     ├── util/        → Printer
-                     └── App.java     → entry point of the application
+     ├── java/sk/peter/tenis/
+     │    ├── controller/      → REST controllers
+     │    ├── dto/             → Data Transfer Objects (PlayerDto)
+     │    ├── exception/       → ApiExceptionHandler
+     │    ├── model/           → Player, PlayerType, Match
+     │    ├── service/         → CsvService, PlayerService
+     │    └── TenisApiApplication.java → Spring Boot main class
+     └── resources/
+          ├── application.properties → CSV path configuration
+          └── data/players.csv       → player data storage
 ```
 
 ---
 
 ## ⚙️ Technologies used
 - ☕ **Java 23**
+- 🚀 **Spring Boot 3.3.x**
 - 🧩 **Maven**
+- 🧰 **Jakarta Validation API**
 - 💻 **IntelliJ IDEA**
 - 🌐 **Git & GitHub**
 
 ---
 
 ## 🚀 How to run
-
-### 1️⃣ Clone the repository
+### 1️⃣ Clone repository
 ```bash
 git clone https://github.com/PeterPcolinsky/TennisApp.git
 ```
 
-### 2️⃣ Run in IntelliJ IDEA
-1. Open the project (select `pom.xml`)  
-2. Run the `App.java` class  
-3. Console menu will appear automatically 🎾
+### 2️⃣ Run with Maven
+```bash
+mvn spring-boot:run
+```
+
+The app runs at **http://localhost:8080**
+
+### 3️⃣ Test API (e.g., Postman)
+#### GET
+```
+GET http://localhost:8080/api/players
+```
+#### POST
+```json
+POST http://localhost:8080/api/players
+{
+  "name": "Novak Djokovic",
+  "age": 37,
+  "type": "PROFESIONAL"
+}
+```
 
 ---
 
 ## 🧠 Project goal
-This project is part of a personal **Java learning plan (August – December 2025)**.  
-It will gradually expand to include new concepts:
-- Exceptions handling  
-- Collections and Stream API  
-- Unit testing (JUnit)  
-- Database layer (MySQL)  
-- REST API  
-- Simple frontend interface (React)
+This project is part of a personal Java learning roadmap *(August – December 2025)*.  
+Goal: build a complete backend REST API with validation and CSV persistence.  
+Next planned extensions:
+- Update & delete players (PUT, DELETE)  
+- Manage matches (GET/POST `/api/matches`)  
+- Database layer (MySQL, Hibernate)  
+- Frontend (React)
 
 ---
 
@@ -74,3 +95,7 @@ It will gradually expand to include new concepts:
 📍 Slovakia  
 🎯 Goal: become a **Junior Java Developer in 2026**  
 🔗 [GitHub – PeterPcolinsky](https://github.com/PeterPcolinsky)
+
+---
+
+**🇸🇰 [Slovak version →](README.md)**
