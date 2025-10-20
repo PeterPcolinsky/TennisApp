@@ -26,8 +26,8 @@ src/
          └── sk/
              └── peter/
                  └── tenis/
-                     ├── model/       → Player, PlayerType, Match
-                     ├── service/     → StatsService
+                     ├── model/       → Match, Player, PlayerType
+                     ├── service/     → CsvService, StatsService
                      ├── ui/          → ConsoleApp
                      ├── util/        → Printer
                      └── App.java     → entry point of the application
