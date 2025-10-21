@@ -8,6 +8,9 @@ import java.util.List;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import sk.peter.tenis.dto.PlayerDto;
 import sk.peter.tenis.model.Player;
 
@@ -25,5 +28,16 @@ public class PlayerController {
     @ResponseStatus(HttpStatus.CREATED)
     public Player create(@Valid @RequestBody PlayerDto dto) {
         return players.createFromDto(dto);
+    }
+
+    @PutMapping("/{name}")
+    public Player update(@PathVariable String name, @Valid @RequestBody PlayerDto dto) {
+        return players.update(name, dto);
+    }
+
+    @DeleteMapping("/{name}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String name) {
+        players.delete(name);
     }
 }
