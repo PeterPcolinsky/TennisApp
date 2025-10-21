@@ -20,4 +20,12 @@ public class ApiExceptionHandler {
                 .forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
         return errors;
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> onIllegalArgument(IllegalArgumentException ex) {
+        Map<String, String> err = new HashMap<>();
+        err.put("error", ex.getMessage() != null ? ex.getMessage() : "Bad request");
+        return err;
+    }
 }
