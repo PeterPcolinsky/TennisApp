@@ -6,6 +6,11 @@ import org.springframework.web.bind.annotation.*;
 import sk.peter.tenis.dto.MatchDto;
 import sk.peter.tenis.model.Match;
 import sk.peter.tenis.service.MatchService;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import sk.peter.tenis.dto.MatchUpdateDto;
+import sk.peter.tenis.exception.NotFoundException;
 
 import java.util.List;
 
@@ -33,4 +38,31 @@ public class MatchController {
         }
         return m;
     }
+
+    @PutMapping
+    public Match update(
+            @RequestParam String playerA,
+            @RequestParam String playerB,
+            @RequestParam String score,
+            @RequestParam String date,
+            @RequestBody @Valid MatchUpdateDto dto
+    ) {
+        Match m = matches.update(playerA, playerB, date, score, dto);
+        if (m == null) {
+            throw new IllegalArgumentException("Unable to update match");
+        }
+        return m;
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(
+            @RequestParam String playerA,
+            @RequestParam String playerB,
+            @RequestParam String score,
+            @RequestParam String date
+    ) {
+        matches.delete(playerA, playerB, date, score);
+    }
+
 }

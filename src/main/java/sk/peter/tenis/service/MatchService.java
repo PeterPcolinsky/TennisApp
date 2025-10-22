@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import sk.peter.tenis.dto.MatchDto;
 import sk.peter.tenis.model.Match;
 import sk.peter.tenis.model.Player;
+import sk.peter.tenis.dto.MatchUpdateDto;
+import sk.peter.tenis.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,7 +25,8 @@ public class MatchService {
         try {
             CsvService.loadPlayers(players);
             CsvService.loadMatches(matches, players);
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
         return matches;
     }
 
@@ -99,4 +102,92 @@ public class MatchService {
         }
         return false;
     }
+
+    private Match findMatch(List<Match> list, String aName, String bName, String score, String dateStr) {
+        if (aName == null || bName == null || score == null || dateStr == null) return null;
+        LocalDate d;
+        try {
+            d = LocalDate.parse(dateStr.trim());
+        } catch (Exception e) {
+            return null;
+        }
+
+        for (Match m : list) {
+            boolean sameOrder =
+                    m.getPlayerA().getName().equalsIgnoreCase(aName.trim()) &&
+                            m.getPlayerB().getName().equalsIgnoreCase(bName.trim());
+            boolean swappedOrder =
+                    m.getPlayerA().getName().equalsIgnoreCase(bName.trim()) &&
+                            m.getPlayerB().getName().equalsIgnoreCase(aName.trim());
+
+            if ((sameOrder || swappedOrder)
+                    && m.getScore().equalsIgnoreCase(score.trim())
+                    && m.getDate().equals(d)) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    public Match update(String playerA, String playerB, String date, String score, MatchUpdateDto dto) {
+        List<Player> players = new ArrayList<>();
+        List<Match> matches = new ArrayList<>();
+        try {
+            // načítaj dáta
+            CsvService.loadPlayers(players);
+            CsvService.loadMatches(matches, players);
+
+            // nájdi existujúci zápas podľa A,B,score,date (mena case-insensitive)
+            Match existing = findMatch(matches, playerA, playerB, score, date);
+            if (existing == null) {
+                throw new NotFoundException("Match not found");
+            }
+
+            // nové hodnoty
+            String newScore = (dto.getNewScore() != null && !dto.getNewScore().isBlank())
+                    ? dto.getNewScore().trim()
+                    : existing.getScore();
+
+            LocalDate newDate = (dto.getNewDate() != null && !dto.getNewDate().isBlank())
+                    ? LocalDate.parse(dto.getNewDate().trim())
+                    : existing.getDate();
+
+            // vytvor aktualizovaný objekt
+            Match updated = new Match(existing.getPlayerA(), existing.getPlayerB(), newScore, newDate);
+
+            // nahraď v kolekcii a ulož
+            int idx = matches.indexOf(existing);
+            matches.set(idx, updated);
+            CsvService.saveMatches(matches);
+
+            return updated;
+        } catch (NotFoundException nf) {
+            throw nf;
+        } catch (Exception e) {
+            // jednoduché spracovanie chýb v CSV fáze
+            return null;
+        }
+    }
+
+    public void delete(String playerA, String playerB, String date, String score) {
+        List<Player> players = new ArrayList<>();
+        List<Match> matches = new ArrayList<>();
+        try {
+            CsvService.loadPlayers(players);
+            CsvService.loadMatches(matches, players);
+
+            Match existing = findMatch(matches, playerA, playerB, score, date);
+            if (existing == null) {
+                throw new NotFoundException("Match not found");
+            }
+
+            matches.remove(existing);
+            CsvService.saveMatches(matches);
+        } catch (NotFoundException nf) {
+            throw nf;
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to delete match");
+        }
+    }
+
 }
