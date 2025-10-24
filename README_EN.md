@@ -1,7 +1,7 @@
 # 🎾 TennisApp (REST API version)
 
 **Spring Boot REST API + CSV backend**  
-Application for managing tennis club players.  
+Application for managing tennis club players and matches.  
 Originally a console project, now extended into a REST API.
 
 ---
@@ -15,9 +15,10 @@ Originally a console project, now extended into a REST API.
 - Data persistence in `data/players.csv`
 
 ### 🎾 Matches
-*(coming soon)*  
 - `GET /api/matches` – list matches  
-- `POST /api/matches` – add new match with player validation
+- `POST /api/matches` – add new match with player validation  
+- `PUT /api/matches` – update match score or date  
+- `DELETE /api/matches` – delete a match by parameters
 
 ---
 
@@ -27,10 +28,10 @@ src/
  └── main/
      ├── java/sk/peter/tenis/
      │    ├── controller/      → REST controllers
-     │    ├── dto/             → Data Transfer Objects (PlayerDto)
+     │    ├── dto/             → Data Transfer Objects (PlayerDto, MatchDto)
      │    ├── exception/       → ApiExceptionHandler
      │    ├── model/           → Player, PlayerType, Match
-     │    ├── service/         → CsvService, PlayerService
+     │    ├── service/         → CsvService, PlayerService, MatchService, StatsService
      │    └── TenisApiApplication.java → Spring Boot main class
      └── resources/
           ├── application.properties → CSV path configuration
@@ -79,12 +80,44 @@ POST http://localhost:8080/api/players
 
 ---
 
+## 🧪 Testing & Code Quality
+
+The project includes unit and integration tests using **Spring Boot Test + MockMvc**.
+
+### 🔹 Tested modules
+| Module | Test class | Tests | Coverage |
+|---------|-------------|--------|-----------|
+| Players (`PlayerController`) | `PlayerControllerTest.java` | 7 | ✅ CRUD + stats + negative cases |
+| Matches (`MatchController`) | `MatchControllerTest.java` | 5 | ✅ CRUD + negative cases |
+
+### 🔹 Test types
+- **Positive scenarios:** create, update, delete, and list players & matches  
+- **Negative scenarios:** invalid input, missing players or matches  
+- **Player statistics:** verified correct win/loss calculation from CSV data
+
+### 🔹 Run tests
+```bash
+mvn test
+```
+
+All tests pass ✅  
+Result: `BUILD SUCCESS`
+
+---
+
+## 🧰 Test tools
+- **JUnit 5**
+- **Spring Boot Starter Test**
+- **MockMvc**
+- **Hamcrest matchers**
+
+---
+
 ## 🧠 Project goal
 This project is part of a personal Java learning roadmap *(August – December 2025)*.  
 Goal: build a complete backend REST API with validation and CSV persistence.  
 Next planned extensions:
 - Update & delete players (PUT, DELETE)  
-- Manage matches (GET/POST `/api/matches`)  
 - Database layer (MySQL, Hibernate)  
 - Frontend (React)
 

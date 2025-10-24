@@ -15,9 +15,10 @@ Projekt pôvodne vznikol ako konzolová verzia a bol rozšírený o REST API vrs
 - Ukladanie dát do súboru `data/players.csv`
 
 ### 🎾 Zápasy (Matches)
-*(bude doplnené v ďalšej fáze)*  
 - `GET /api/matches` – načítanie zápasov  
 - `POST /api/matches` – pridanie zápasu s overením hráčov
+- `PUT /api/matches` – aktualizácia výsledku alebo dátumu
+- `DELETE /api/matches` – zmazanie zápasu podľa parametrov
 
 ---
 
@@ -27,10 +28,10 @@ src/
  └── main/
      ├── java/sk/peter/tenis/
      │    ├── controller/      → REST controllery
-     │    ├── dto/             → Data Transfer Objects (PlayerDto)
+     │    ├── dto/             → Data Transfer Objects (PlayerDto, MatchDto)
      │    ├── exception/       → ApiExceptionHandler
      │    ├── model/           → Player, PlayerType, Match
-     │    ├── service/         → CsvService, PlayerService
+     │    ├── service/         → CsvService, PlayerService, MatchService, StatsService
      │    └── TenisApiApplication.java → spúšťací bod aplikácie
      └── resources/
           ├── application.properties → konfigurácia cesty k CSV
@@ -79,12 +80,44 @@ POST http://localhost:8080/api/players
 
 ---
 
+## 🧪 Testovanie a kvalita kódu
+
+Projekt obsahuje jednotkové a integračné testy postavené na **Spring Boot Test + MockMvc**.
+
+### 🔹 Testované moduly
+| Modul | Súbor testov | Počet testov | Pokrytie |
+|-------|---------------|---------------|-----------|
+| Hráči (`PlayerController`) | `PlayerControllerTest.java` | 7 | ✅ CRUD + štatistiky + negatívne prípady |
+| Zápasy (`MatchController`) | `MatchControllerTest.java` | 5 | ✅ CRUD + negatívne prípady |
+
+### 🔹 Typy testov
+- **Pozitívne scenáre:** vytvorenie, aktualizácia, mazanie, načítanie hráčov a zápasov  
+- **Negatívne scenáre:** neplatné vstupy, neexistujúci hráči alebo zápasy  
+- **Štatistiky hráčov:** testované reálne hodnoty výhier/prehier podľa CSV dát
+
+### 🔹 Spustenie testov
+```bash
+mvn test
+```
+
+Všetky testy prechádzajú úspešne ✅  
+Výsledok: `BUILD SUCCESS`
+
+---
+
+## 🧰 Testovacie nástroje
+- **JUnit 5**
+- **Spring Boot Starter Test**
+- **MockMvc**
+- **Hamcrest matchers**
+
+---
+
 ## 🧠 Cieľ projektu
 Projekt je súčasťou osobného Java študijného plánu *(August – December 2025)*.  
 Cieľ: vytvoriť plnohodnotnú backend aplikáciu s REST API, validáciami a CSV perzistenciou.  
 Ďalšie plánované rozšírenia:
 - Úprava a mazanie hráčov (PUT, DELETE)  
-- Evidencia zápasov (GET/POST `/api/matches`)  
 - Prepojenie s databázou (MySQL, Hibernate)  
 - Frontend rozhranie (React)
 
@@ -99,4 +132,3 @@ Cieľ: vytvoriť plnohodnotnú backend aplikáciu s REST API, validáciami a CSV
 ---
 
 **🇬🇧 [English version →](README_EN.md)**
->
