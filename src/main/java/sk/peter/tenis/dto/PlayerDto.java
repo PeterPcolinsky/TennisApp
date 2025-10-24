@@ -12,13 +12,34 @@ public class PlayerDto {
     private int age;
 
     @NotBlank(message = "Typ je povinný (AMATER alebo PROFESIONAL)")
+    @Pattern(
+            regexp = "(?i)(AMATER|PROFESIONAL|Amatér|Profesionál)",
+            message = "Typ musí byť AMATER alebo PROFESIONAL (bez ohľadu na veľkosť písmen)"
+    )
     private String type; // prijímame ako text, mapneme na enum
 
     // gettre/settre
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public int getAge() { return age; }
-    public void setAge(int age) { this.age = age; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }
