@@ -88,9 +88,9 @@ public class ConsoleApp {
     private void calcWinRateDemo(Scanner sc) {
         int wins = readIntInRange(sc, "Zadaj počet výhier: ", 0, 1000);
         int losses = readIntInRange(sc, "Zadaj počet prehier: ", 0, 1000);
-        StatsService stats = new StatsService();
-        double winRate = stats.calcWinRate(wins, losses);
-        Printer.println("Výhernosť: " + winRate + " %");
+        //StatsService stats = new StatsService();
+        //double winRate = stats.calcWinRate(wins, losses);
+        //Printer.println("Výhernosť: " + winRate + " %");
     }
 
     /**
