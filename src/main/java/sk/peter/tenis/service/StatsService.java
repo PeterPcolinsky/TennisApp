@@ -7,6 +7,7 @@ import sk.peter.tenis.model.Match;
 import sk.peter.tenis.model.Player;
 import sk.peter.tenis.dto.LeaderboardDto;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
@@ -164,6 +165,74 @@ public class StatsService {
 
         } catch (Exception e) {
             return List.of();
+        }
+    }
+
+    private LocalDate parseDateSafe(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return LocalDate.parse(s.trim());
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    public LeaderboardDto getPlayerStats(String playerName, String from, String to) {
+        if (playerName == null || playerName.isBlank()) return null;
+
+        try {
+            List<Match> matches = matchService.findAll();
+
+            // final / effectively final lokálne premenné
+            final String target = playerName.trim();
+            final LocalDate fromDate = parseDateSafe(from);
+            final LocalDate toDate = parseDateSafe(to);
+
+            List<Match> playerMatches = matches.stream()
+                    .filter(m -> m.getPlayerA().getName().equalsIgnoreCase(target)
+                            || m.getPlayerB().getName().equalsIgnoreCase(target))
+                    .filter(m -> (fromDate == null || !m.getDate().isBefore(fromDate))
+                            && (toDate == null || !m.getDate().isAfter(toDate)))
+                    .toList();
+
+            int total = playerMatches.size();
+            int wins = 0;
+            int losses = 0;
+
+            for (Match m : playerMatches) {
+                String score = m.getScore();
+                if (score == null || !score.contains(":")) continue;
+
+                String[] sets = score.split(",");
+                int setsA = 0, setsB = 0;
+
+                for (String s : sets) {
+                    String[] games = s.trim().split(":");
+                    if (games.length != 2) continue;
+                    try {
+                        int gamesA = Integer.parseInt(games[0].trim());
+                        int gamesB = Integer.parseInt(games[1].trim());
+                        if (gamesA > gamesB) setsA++;
+                        else if (gamesB > gamesA) setsB++;
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+
+                if (setsA == 0 && setsB == 0) continue;
+
+                String winner = (setsA > setsB)
+                        ? m.getPlayerA().getName()
+                        : m.getPlayerB().getName();
+
+                if (winner.equalsIgnoreCase(target)) wins++;
+                else losses++;
+            }
+
+            double winRate = total == 0 ? 0.0 : Math.round((wins * 1000.0 / total)) / 10.0;
+            return new LeaderboardDto(playerName.trim(), total, wins, losses, winRate);
+
+        } catch (Exception e) {
+            return null;
         }
     }
 

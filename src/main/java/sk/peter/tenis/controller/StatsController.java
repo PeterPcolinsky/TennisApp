@@ -57,4 +57,26 @@ public class StatsController {
 
         return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }
+
+    @GetMapping("/top")
+    public List<LeaderboardDto> top(
+            @RequestParam(defaultValue = "3") int limit
+    ) {
+        int n = Math.max(1, Math.min(limit, 100)); // strážime rozsah
+        return statsService.getLeaderboard()
+                .stream()
+                .limit(n)
+                .toList();
+    }
+
+    @GetMapping("/player")
+    public LeaderboardDto playerStats(
+            @RequestParam String name,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ) {
+        LeaderboardDto dto = statsService.getPlayerStats(name, from, to);
+        if (dto == null) throw new IllegalArgumentException("Invalid player or parameters");
+        return dto;
+    }
 }

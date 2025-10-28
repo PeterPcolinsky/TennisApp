@@ -44,4 +44,28 @@ class StatsControllerTest {
                 .andExpect(content().string(containsString("Peter;2;2;0;100.0")))
                 .andExpect(content().string(containsString("Novak;3;1;2;33.3")));
     }
+
+    @Test
+    void shouldReturnTopN() throws Exception {
+        mockMvc.perform(get("/api/stats/top").param("limit", "2"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.length()", is(2)))
+                .andExpect(jsonPath("$[0].winRatePercent", is(100.0)));
+    }
+
+    @Test
+    void shouldReturnPlayerStatsWithDateRange() throws Exception {
+        mockMvc.perform(get("/api/stats/player")
+                        .param("name", "Peter")
+                        .param("from", "2025-04-01")
+                        .param("to", "2025-05-31"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.name", is("Peter")))
+                .andExpect(jsonPath("$.matches", is(2)))
+                .andExpect(jsonPath("$.wins", is(2)))
+                .andExpect(jsonPath("$.losses", is(0)))
+                .andExpect(jsonPath("$.winRatePercent", is(100.0)));
+    }
 }
