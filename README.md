@@ -1,7 +1,7 @@
 # 🎾 TenisApp (REST API verzia)
 
 **Spring Boot REST API + CSV backend**  
-Aplikácia pre evidenciu hráčov tenisového klubu.  
+Aplikácia pre evidenciu hráčov a zápasov tenisového klubu.  
 Projekt pôvodne vznikol ako konzolová verzia a bol rozšírený o REST API vrstvu.
 
 ---
@@ -9,33 +9,60 @@ Projekt pôvodne vznikol ako konzolová verzia a bol rozšírený o REST API vrs
 ## 🧩 Funkcionality
 ### 👥 Hráči (Players)
 - `GET /api/players` – zobrazí všetkých hráčov  
-- `POST /api/players` – pridá nového hráča  
-- Validácia vstupov pomocou `@Valid`  
+- `POST /api/players` – pridá nového hráča (validácia `@Valid`)  
 - Chybové správy v JSON formáte (`ApiExceptionHandler`)  
-- Ukladanie dát do súboru `data/players.csv`
 
 ### 🎾 Zápasy (Matches)
 - `GET /api/matches` – načítanie zápasov  
-- `POST /api/matches` – pridanie zápasu s overením hráčov
-- `PUT /api/matches` – aktualizácia výsledku alebo dátumu
-- `DELETE /api/matches` – zmazanie zápasu podľa parametrov
+- `POST /api/matches` – pridanie zápasu s overením hráčov  
+- `PUT /api/matches` – aktualizácia výsledku alebo dátumu  
+- `DELETE /api/matches` – zmazanie zápasu podľa parametrov  
+- `GET /api/matches/filter` – filtrovanie podľa hráča a/alebo dátumového rozsahu
+
+### 📊 Štatistiky (Stats)
+- `GET /api/stats/player?name={meno}&from=YYYY-MM-DD&to=YYYY-MM-DD` – štatistiky hráča  
+  - výsledok obsahuje: počet zápasov, výhry, prehry, **winRatePercent**  
+- `GET /api/stats/leaderboard` – rebríček hráčov podľa win-rate (zoradené)  
+- `GET /api/stats/export` – export rebríčka do CSV
+
+Ukážka JSON pre `/api/stats/player`:
+```json
+{
+  "name": "Peter",
+  "matches": 2,
+  "wins": 2,
+  "losses": 0,
+  "winRatePercent": 100.0
+}
+```
 
 ---
 
 ## 🧱 Štruktúra projektu
 ```
-src/
- └── main/
-     ├── java/sk/peter/tenis/
-     │    ├── controller/      → REST controllery
-     │    ├── dto/             → Data Transfer Objects (PlayerDto, MatchDto)
-     │    ├── exception/       → ApiExceptionHandler
-     │    ├── model/           → Player, PlayerType, Match
-     │    ├── service/         → CsvService, PlayerService, MatchService, StatsService
-     │    └── TenisApiApplication.java → spúšťací bod aplikácie
-     └── resources/
-          ├── application.properties → konfigurácia cesty k CSV
-          └── data/players.csv       → uložené dáta hráčov
+tenis/
+ ├── data/
+ │   ├── matches.csv
+ │   └── players.csv
+ └── src/
+     ├── main/
+     │   ├── java/sk/peter/tenis/
+     │   │   ├── controller/      → HealthController, MatchController, PlayerController, StatsController
+     │   │   ├── dto/             → PlayerDto, PlayerStatsDto, MatchDto, MatchUpdateDto, LeaderboardDto
+     │   │   ├── exception/       → ApiExceptionHandler, NotFoundException
+     │   │   ├── model/           → Player, PlayerType, Match
+     │   │   ├── service/         → CsvService, PlayerService, MatchService, StatsService
+     │   │   ├── ui/              → ConsoleApp
+     │   │   ├── util/            → Printer
+     │   │   ├── App.java
+     │   │   └── TenisApiApplication.java
+     │   └── resources/
+     │       └── application.properties
+     └── test/
+         └── java/sk/peter/tenis/controller/
+             ├── PlayerControllerTest.java
+             ├── MatchControllerTest.java
+             └── StatsControllerTest.java
 ```
 
 ---
@@ -60,7 +87,6 @@ git clone https://github.com/PeterPcolinsky/TennisApp.git
 ```bash
 mvn spring-boot:run
 ```
-
 Aplikácia beží na **http://localhost:8080**
 
 ### 3️⃣ Testovanie API (napr. Postman)
@@ -69,10 +95,12 @@ Aplikácia beží na **http://localhost:8080**
 GET http://localhost:8080/api/players
 ```
 #### POST
-```json
+```http
 POST http://localhost:8080/api/players
+Content-Type: application/json
+
 {
-  "name": "Novak Djokovic",
+  "name": "Novak",
   "age": 37,
   "type": "PROFESIONAL"
 }
@@ -85,41 +113,34 @@ POST http://localhost:8080/api/players
 Projekt obsahuje jednotkové a integračné testy postavené na **Spring Boot Test + MockMvc**.
 
 ### 🔹 Testované moduly
-| Modul | Súbor testov | Počet testov | Pokrytie |
-|-------|---------------|---------------|-----------|
-| Hráči (`PlayerController`) | `PlayerControllerTest.java` | 7 | ✅ CRUD + štatistiky + negatívne prípady |
-| Zápasy (`MatchController`) | `MatchControllerTest.java` | 5 | ✅ CRUD + negatívne prípady |
+| Modul | Súbor testov | Poznámka |
+|-------|---------------|----------|
+| Hráči (`PlayerController`) | `PlayerControllerTest.java` | CRUD + negatívne prípady |
+| Zápasy (`MatchController`) | `MatchControllerTest.java` | CRUD + filter endpoint |
+| Štatistiky (`StatsController`) | `StatsControllerTest.java` | player stats (range), leaderboard, export |
 
-### 🔹 Typy testov
-- **Pozitívne scenáre:** vytvorenie, aktualizácia, mazanie, načítanie hráčov a zápasov  
-- **Negatívne scenáre:** neplatné vstupy, neexistujúci hráči alebo zápasy  
-- **Štatistiky hráčov:** testované reálne hodnoty výhier/prehier podľa CSV dát
+**Celkovo: 19 testov – všetky prechádzajú ✅ (`BUILD SUCCESS`)**
 
 ### 🔹 Spustenie testov
 ```bash
 mvn test
 ```
 
-Všetky testy prechádzajú úspešne ✅  
-Výsledok: `BUILD SUCCESS`
+---
+
+## 🧰 DTO a služby
+- **DTO:** `PlayerDto`, `PlayerStatsDto`, `MatchDto`, `MatchUpdateDto`, `LeaderboardDto`  
+- **Služby:** `CsvService`, `PlayerService`, `MatchService`, `StatsService`  
+  - `StatsService#getLeaderboard()` – výpočet zoradeného rebríčka
 
 ---
 
-## 🧰 Testovacie nástroje
-- **JUnit 5**
-- **Spring Boot Starter Test**
-- **MockMvc**
-- **Hamcrest matchers**
-
----
-
-## 🧠 Cieľ projektu
-Projekt je súčasťou osobného Java študijného plánu *(August – December 2025)*.  
-Cieľ: vytvoriť plnohodnotnú backend aplikáciu s REST API, validáciami a CSV perzistenciou.  
-Ďalšie plánované rozšírenia:
-- Úprava a mazanie hráčov (PUT, DELETE)  
-- Prepojenie s databázou (MySQL, Hibernate)  
-- Frontend rozhranie (React)
+## 🗺️ Fázy a stav projektu
+```
+✅ Fáza 1 – REST API (CSV backend) – dokončené
+🚧 Fáza 2 – JPA + Hibernate – pripravované (migrácia z CSV na DB)
+⏳ Fáza 3 – React Frontend – plánované
+```
 
 ---
 
@@ -127,7 +148,7 @@ Cieľ: vytvoriť plnohodnotnú backend aplikáciu s REST API, validáciami a CSV
 **Peter Pčolinský**  
 📍 Slovensko  
 🎯 Cieľ: stať sa **Junior Java Developerom v roku 2026**  
-🔗 [GitHub – PeterPcolinsky](https://github.com/PeterPcolinsky)
+🔗 GitHub: https://github.com/PeterPcolinsky
 
 ---
 
