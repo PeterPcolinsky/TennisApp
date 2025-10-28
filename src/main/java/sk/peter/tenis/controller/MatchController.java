@@ -65,4 +65,42 @@ public class MatchController {
         matches.delete(playerA, playerB, date, score);
     }
 
+    @GetMapping("/filter")
+    public List<Match> filter(
+            @RequestParam(required = false) String player,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ) {
+        List<Match> all = matches.findAll();
+
+        java.time.LocalDate fromDate = parseDate(from);
+        java.time.LocalDate toDate = parseDate(to);
+        String playerLc = player == null ? null : player.trim().toLowerCase();
+
+        return all.stream()
+                .filter(m -> {
+                    // filter player
+                    if (playerLc != null && !playerLc.isBlank()) {
+                        String a = m.getPlayerA().getName().toLowerCase();
+                        String b = m.getPlayerB().getName().toLowerCase();
+                        if (!a.equals(playerLc) && !b.equals(playerLc)) return false;
+                    }
+                    // filter from (inclusive)
+                    if (fromDate != null && m.getDate().isBefore(fromDate)) return false;
+                    // filter to (inclusive)
+                    if (toDate != null && m.getDate().isAfter(toDate)) return false;
+                    return true;
+                })
+                .toList();
+    }
+
+    private java.time.LocalDate parseDate(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return java.time.LocalDate.parse(s.trim());
+        } catch (Exception e) {
+            return null;
+        } // nevalidný dátum ignorujeme
+    }
+
 }

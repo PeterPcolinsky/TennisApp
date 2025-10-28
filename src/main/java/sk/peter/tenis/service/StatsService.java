@@ -5,8 +5,12 @@ import org.springframework.stereotype.Service;
 import sk.peter.tenis.dto.PlayerStatsDto;
 import sk.peter.tenis.model.Match;
 import sk.peter.tenis.model.Player;
+import sk.peter.tenis.dto.LeaderboardDto;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Služba pre výpočet štatistík hráčov na základe CSV dát.
  */
@@ -61,7 +65,8 @@ public class StatsService {
                     int gamesB = Integer.parseInt(games[1].trim());
                     if (gamesA > gamesB) setsA++;
                     else if (gamesB > gamesA) setsB++;
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
             }
 
             if (setsA == 0 && setsB == 0) continue; // žiadny validný set
@@ -91,6 +96,75 @@ public class StatsService {
 
     private double round(double v) {
         return Math.round(v * 10.0) / 10.0;
+    }
+
+    public List<LeaderboardDto> getLeaderboard() {
+        try {
+            // načítaj všetkých hráčov
+            List<Player> players = new ArrayList<>();
+            CsvService.loadPlayers(players);
+
+            // načítaj všetky zápasy
+            List<Match> matches = matchService.findAll();
+
+            List<LeaderboardDto> leaderboard = new ArrayList<>();
+
+            for (Player player : players) {
+                String name = player.getName().trim();
+
+                // zistíme len tie zápasy, kde hral tento hráč
+                List<Match> playerMatches = matches.stream()
+                        .filter(m -> m.getPlayerA().getName().equalsIgnoreCase(name)
+                                || m.getPlayerB().getName().equalsIgnoreCase(name))
+                        .toList();
+
+                int total = playerMatches.size();
+                int wins = 0;
+                int losses = 0;
+
+                for (Match m : playerMatches) {
+                    String score = m.getScore();
+                    if (score == null || !score.contains(":")) continue;
+
+                    String[] sets = score.split(",");
+                    int setsA = 0;
+                    int setsB = 0;
+
+                    for (String s : sets) {
+                        String[] games = s.trim().split(":");
+                        if (games.length != 2) continue;
+                        try {
+                            int gamesA = Integer.parseInt(games[0].trim());
+                            int gamesB = Integer.parseInt(games[1].trim());
+                            if (gamesA > gamesB) setsA++;
+                            else if (gamesB > gamesA) setsB++;
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+
+                    if (setsA == 0 && setsB == 0) continue;
+
+                    String winner = setsA > setsB
+                            ? m.getPlayerA().getName().toLowerCase()
+                            : m.getPlayerB().getName().toLowerCase();
+
+                    if (winner.equals(name.toLowerCase())) wins++;
+                    else losses++;
+                }
+
+                double winRate = total == 0 ? 0.0 : Math.round((wins * 1000.0 / total)) / 10.0;
+
+                leaderboard.add(new LeaderboardDto(name, total, wins, losses, winRate));
+            }
+
+            // zoradíme podľa výhernosťi zostupne
+            return leaderboard.stream()
+                    .sorted(Comparator.comparingDouble(LeaderboardDto::getWinRatePercent).reversed())
+                    .toList();
+
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     // 👇 Pôvodná pomocná metóda z konzolovej verzie
