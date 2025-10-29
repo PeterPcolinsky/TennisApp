@@ -1,106 +1,106 @@
 package sk.peter.tenis.controller;
 
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
 import sk.peter.tenis.dto.MatchDto;
+import sk.peter.tenis.entity.MatchEntity;
+import sk.peter.tenis.entity.PlayerEntity;
 import sk.peter.tenis.model.Match;
 import sk.peter.tenis.service.MatchService;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import sk.peter.tenis.dto.MatchUpdateDto;
-import sk.peter.tenis.exception.NotFoundException;
+import sk.peter.tenis.service.jpa.MatchJpaService;
+import sk.peter.tenis.service.jpa.PlayerJpaService;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Controller pre zápasy (CSV + JPA režim).
+ */
 @RestController
 @RequestMapping("/api/matches")
 public class MatchController {
 
-    private final MatchService matches;
+    private final MatchService csvService;
+    private final MatchJpaService jpaService;
+    private final PlayerJpaService playerJpaService;
+    private final Environment env;
 
-    public MatchController(MatchService matches) {
-        this.matches = matches;
+    public MatchController(MatchService csvService,
+                           MatchJpaService jpaService,
+                           PlayerJpaService playerJpaService,
+                           Environment env) {
+        this.csvService = csvService;
+        this.jpaService = jpaService;
+        this.playerJpaService = playerJpaService;
+        this.env = env;
     }
+
+    private boolean isJpaActive() {
+        return Arrays.stream(env.getActiveProfiles()).anyMatch(p -> p.equalsIgnoreCase("h2"));
+    }
+
+    // ---------------- CRUD ----------------
 
     @GetMapping
-    public List<Match> all() {
-        return matches.findAll();
+    public List<?> getAllMatches() {
+        if (isJpaActive()) {
+            return jpaService.findAll();
+        }
+        return csvService.findAll();
     }
 
+    /**
+     * Vytvorí nový zápas.
+     * Ak beží JPA profil (h2), hráčov vyhľadá priamo v databáze podľa mena.
+     */
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Match create(@Valid @RequestBody MatchDto dto) {
-        Match m = matches.createFromDto(dto);
-        if (m == null) {
-            throw new IllegalArgumentException("Unable to create match (check players/score/date).");
+    public Object createMatch(@RequestBody MatchDto dto) {
+        if (isJpaActive()) {
+            // nájdeme hráčov podľa mena (case-insensitive)
+            PlayerEntity playerA = playerJpaService.findAll().stream()
+                    .filter(p -> p.getName().equalsIgnoreCase(dto.getPlayerA()))
+                    .findFirst()
+                    .orElse(null);
+
+            PlayerEntity playerB = playerJpaService.findAll().stream()
+                    .filter(p -> p.getName().equalsIgnoreCase(dto.getPlayerB()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (playerA == null || playerB == null) {
+                throw new IllegalArgumentException("One or both players not found in database");
+            }
+
+            MatchEntity entity = new MatchEntity(
+                    playerA,
+                    playerB,
+                    dto.getScore(),
+                    dto.getDate() != null ? LocalDate.parse(dto.getDate()) : null
+            );
+
+            return jpaService.save(entity);
         }
-        return m;
+
+        return csvService.createFromDto(dto);
     }
 
-    @PutMapping
-    public Match update(
-            @RequestParam String playerA,
-            @RequestParam String playerB,
-            @RequestParam String score,
-            @RequestParam String date,
-            @RequestBody @Valid MatchUpdateDto dto
-    ) {
-        Match m = matches.update(playerA, playerB, date, score, dto);
-        if (m == null) {
-            throw new IllegalArgumentException("Unable to update match");
+    /**
+     * Vymaže zápas podľa hráčov, dátumu a výsledku.
+     */
+    @DeleteMapping("/{playerA}/{playerB}/{date}/{score}")
+    public void deleteMatch(@PathVariable String playerA,
+                            @PathVariable String playerB,
+                            @PathVariable String date,
+                            @PathVariable String score) {
+        if (isJpaActive()) {
+            jpaService.findAll().stream()
+                    .filter(m -> m.getResult().equalsIgnoreCase(score))
+                    .filter(m -> m.getDate().toString().equalsIgnoreCase(date))
+                    .findFirst()
+                    .ifPresent(m -> jpaService.deleteById(m.getId()));
+        } else {
+            csvService.delete(playerA, playerB, date, score);
         }
-        return m;
     }
-
-    @DeleteMapping
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(
-            @RequestParam String playerA,
-            @RequestParam String playerB,
-            @RequestParam String score,
-            @RequestParam String date
-    ) {
-        matches.delete(playerA, playerB, date, score);
-    }
-
-    @GetMapping("/filter")
-    public List<Match> filter(
-            @RequestParam(required = false) String player,
-            @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to
-    ) {
-        List<Match> all = matches.findAll();
-
-        java.time.LocalDate fromDate = parseDate(from);
-        java.time.LocalDate toDate = parseDate(to);
-        String playerLc = player == null ? null : player.trim().toLowerCase();
-
-        return all.stream()
-                .filter(m -> {
-                    // filter player
-                    if (playerLc != null && !playerLc.isBlank()) {
-                        String a = m.getPlayerA().getName().toLowerCase();
-                        String b = m.getPlayerB().getName().toLowerCase();
-                        if (!a.equals(playerLc) && !b.equals(playerLc)) return false;
-                    }
-                    // filter from (inclusive)
-                    if (fromDate != null && m.getDate().isBefore(fromDate)) return false;
-                    // filter to (inclusive)
-                    if (toDate != null && m.getDate().isAfter(toDate)) return false;
-                    return true;
-                })
-                .toList();
-    }
-
-    private java.time.LocalDate parseDate(String s) {
-        if (s == null || s.isBlank()) return null;
-        try {
-            return java.time.LocalDate.parse(s.trim());
-        } catch (Exception e) {
-            return null;
-        } // nevalidný dátum ignorujeme
-    }
-
 }
