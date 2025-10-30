@@ -1,155 +1,150 @@
-# 🎾 TenisApp (REST API verzia)
+# 🎾 TennisApp – REST API pre správu tenisových zápasov
 
-**Spring Boot REST API + CSV backend**  
-Aplikácia pre evidenciu hráčov a zápasov tenisového klubu.  
-Projekt pôvodne vznikol ako konzolová verzia a bol rozšírený o REST API vrstvu.
-
----
-
-## 🧩 Funkcionality
-### 👥 Hráči (Players)
-- `GET /api/players` – zobrazí všetkých hráčov  
-- `POST /api/players` – pridá nového hráča (validácia `@Valid`)  
-- Chybové správy v JSON formáte (`ApiExceptionHandler`)  
-
-### 🎾 Zápasy (Matches)
-- `GET /api/matches` – načítanie zápasov  
-- `POST /api/matches` – pridanie zápasu s overením hráčov  
-- `PUT /api/matches` – aktualizácia výsledku alebo dátumu  
-- `DELETE /api/matches` – zmazanie zápasu podľa parametrov  
-- `GET /api/matches/filter` – filtrovanie podľa hráča a/alebo dátumového rozsahu
-
-### 📊 Štatistiky (Stats)
-- `GET /api/stats/player?name={meno}&from=YYYY-MM-DD&to=YYYY-MM-DD` – štatistiky hráča  
-  - výsledok obsahuje: počet zápasov, výhry, prehry, **winRatePercent**  
-- `GET /api/stats/leaderboard` – rebríček hráčov podľa win-rate (zoradené)  
-- `GET /api/stats/export` – export rebríčka do CSV
-
-Ukážka JSON pre `/api/stats/player`:
-```json
-{
-  "name": "Peter",
-  "matches": 2,
-  "wins": 2,
-  "losses": 0,
-  "winRatePercent": 100.0
-}
-```
-
----
-
-## 🧱 Štruktúra projektu
-```
-tenis/
- ├── data/
- │   ├── matches.csv
- │   └── players.csv
- └── src/
-     ├── main/
-     │   ├── java/sk/peter/tenis/
-     │   │   ├── controller/      → HealthController, MatchController, PlayerController, StatsController
-     │   │   ├── dto/             → PlayerDto, PlayerStatsDto, MatchDto, MatchUpdateDto, LeaderboardDto
-     │   │   ├── exception/       → ApiExceptionHandler, NotFoundException
-     │   │   ├── model/           → Player, PlayerType, Match
-     │   │   ├── service/         → CsvService, PlayerService, MatchService, StatsService
-     │   │   ├── ui/              → ConsoleApp
-     │   │   ├── util/            → Printer
-     │   │   ├── App.java
-     │   │   └── TenisApiApplication.java
-     │   └── resources/
-     │       └── application.properties
-     └── test/
-         └── java/sk/peter/tenis/controller/
-             ├── PlayerControllerTest.java
-             ├── MatchControllerTest.java
-             └── StatsControllerTest.java
-```
+## 🧩 Prehľad projektu
+TennisApp je viacvrstvová Spring Boot aplikácia, ktorá umožňuje správu tenisových hráčov, zápasov a štatistík.
+Projekt podporuje **dvojitý dátový režim**:
+- **CSV režim (predvolený)** – dáta sa ukladajú do súborov.
+- **JPA režim (profil `h2`)** – dáta sa ukladajú do H2 databázy cez Spring Data JPA a Hibernate.
 
 ---
 
 ## ⚙️ Použité technológie
-- ☕ **Java 23**
-- 🚀 **Spring Boot 3.3.x**
-- 🧩 **Maven**
-- 🧰 **Jakarta Validation API**
-- 💻 **IntelliJ IDEA**
-- 🌐 **Git & GitHub**
+- **Java 23 (OpenJDK)**
+- **Spring Boot 3.3**
+- **Spring Web / REST API**
+- **Spring Data JPA + Hibernate**
+- **H2 Database (profil `h2`)**
+- **Lombok**
+- **JUnit 5**
+- **Postman (testovanie endpointov)**
+- **Maven**
+
+---
+
+## 🧱 Štruktúra projektu
+
+```
+tenis/
+ ├── data/
+ │   ├── players.csv
+ │   ├── matches.csv
+ │
+ ├── src/main/java/sk/peter/tenis/
+ │   ├── controller/
+ │   │    ├── PlayerController.java
+ │   │    ├── MatchController.java
+ │   │    └── StatsController.java
+ │   │
+ │   ├── dto/
+ │   │    ├── PlayerDto.java
+ │   │    ├── MatchDto.java
+ │   │    └── LeaderboardDto.java
+ │   │
+ │   ├── entity/
+ │   │    ├── PlayerEntity.java
+ │   │    └── MatchEntity.java
+ │   │
+ │   ├── repository/
+ │   │    ├── PlayerRepository.java
+ │   │    └── MatchRepository.java
+ │   │
+ │   ├── service/
+ │   │    ├── PlayerService.java
+ │   │    ├── MatchService.java
+ │   │    ├── StatsService.java
+ │   │    ├── CsvService.java
+ │   │    └── jpa/
+ │   │         ├── PlayerJpaService.java
+ │   │         ├── MatchJpaService.java
+ │   │         └── StatsJpaService.java
+ │   │
+ │   ├── exception/
+ │   │    ├── NotFoundException.java
+ │   │    └── ApiExceptionHandler.java
+ │   │
+ │   └── TenisApiApplication.java
+ │
+ ├── src/main/resources/
+ │   ├── application.properties
+ │   └── application-h2.properties
+ │
+ └── pom.xml
+```
+
+---
+
+## 🧭 Fázy vývoja
+
+| Fáza | Popis |
+|------|--------|
+| **1** | Konzolová aplikácia (CSV) |
+| **2** | REST API – CSV režim |
+| **3** | DTO a Controllers |
+| **4** | Štatistiky a Leaderboard (CSV) |
+| **5** | **JPA integrácia (H2, Hibernate)** – PlayerEntity, MatchEntity, StatsJpaService |
+| **6** | **CRUD pre hráčov a zápasy (JPA)** – PlayerJpaService, MatchJpaService, dual mode (CSV ↔ H2) |
+
+---
+
+## 🗄️ Režimy aplikácie
+
+### 🔹 CSV režim (predvolený)
+Dáta sa načítavajú zo súborov `players.csv` a `matches.csv`.
+
+### 🔹 JPA / H2 režim
+Dáta sa načítavajú a ukladajú do databázy H2 (`./data/tenisdb.mv.db`).
+
+#### Aktivácia:
+V IntelliJ IDEA → **Run Configuration → Modify options → VM options:**
+```
+-Dspring.profiles.active=h2
+```
+
+V logu sa zobrazí:
+```
+The following 1 profile is active: "h2"
+```
 
 ---
 
 ## 🚀 Spustenie projektu
-### 1️⃣ Klonovanie
-```bash
-git clone https://github.com/PeterPcolinsky/TennisApp.git
-```
 
-### 2️⃣ Spustenie cez Maven
-```bash
-mvn spring-boot:run
-```
-Aplikácia beží na **http://localhost:8080**
+1. Importuj projekt ako **Maven Project**  
+2. Spusť `TenisApiApplication.java`  
+3. Over v logu, že beží H2 alebo CSV profil  
+4. Otestuj cez **Postman**:
 
-### 3️⃣ Testovanie API (napr. Postman)
-#### GET
-```
-GET http://localhost:8080/api/players
-```
-#### POST
-```http
-POST http://localhost:8080/api/players
-Content-Type: application/json
-
-{
-  "name": "Novak",
-  "age": 37,
-  "type": "PROFESIONAL"
-}
-```
+| Operácia | Endpoint | Popis |
+|-----------|-----------|--------|
+| GET | `/api/players` | Načítanie hráčov |
+| POST | `/api/players` | Pridanie hráča |
+| DELETE | `/api/players/{name}` | Vymazanie hráča |
+| GET | `/api/matches` | Načítanie zápasov |
+| POST | `/api/matches` | Pridanie zápasu |
+| DELETE | `/api/matches/{playerA}/{playerB}/{date}/{score}` | Vymazanie zápasu |
+| GET | `/api/stats/leaderboard` | Štatistiky hráčov |
+| GET | `/api/stats/player?name=Peter` | Štatistiky konkrétneho hráča |
+| GET | `/api/stats/export` | Export leaderboardu do CSV |
 
 ---
 
-## 🧪 Testovanie a kvalita kódu
-
-Projekt obsahuje jednotkové a integračné testy postavené na **Spring Boot Test + MockMvc**.
-
-### 🔹 Testované moduly
-| Modul | Súbor testov | Poznámka |
-|-------|---------------|----------|
-| Hráči (`PlayerController`) | `PlayerControllerTest.java` | CRUD + negatívne prípady |
-| Zápasy (`MatchController`) | `MatchControllerTest.java` | CRUD + filter endpoint |
-| Štatistiky (`StatsController`) | `StatsControllerTest.java` | player stats (range), leaderboard, export |
-
-**Celkovo: 19 testov – všetky prechádzajú ✅ (`BUILD SUCCESS`)**
-
-### 🔹 Spustenie testov
-```bash
-mvn test
-```
+## 🧪 Testovanie
+Všetky endpointy boli otestované v Postmane:
+- CRUD operácie pre hráčov a zápasy
+- Štatistiky a export
+- Filtrovanie podľa dátumu a hráča  
+Všetky požiadavky odpovedajú `200 OK`.
 
 ---
 
-## 🧰 DTO a služby
-- **DTO:** `PlayerDto`, `PlayerStatsDto`, `MatchDto`, `MatchUpdateDto`, `LeaderboardDto`  
-- **Služby:** `CsvService`, `PlayerService`, `MatchService`, `StatsService`  
-  - `StatsService#getLeaderboard()` – výpočet zoradeného rebríčka
+## 🧩 Roadmap
+- 🔜 Fáza 7 – migrácia na **MySQL**
+- 🔜 Fáza 8 – jednotkové testy a refaktor
+- 🔜 Fáza 9 – frontend (React) – Leaderboard, štatistiky, CRUD
+- 🔜 Fáza 10 – Docker a CI/CD
 
 ---
 
-## 🗺️ Fázy a stav projektu
-```
-✅ Fáza 1 – REST API (CSV backend) – dokončené
-🚧 Fáza 2 – JPA + Hibernate – pripravované (migrácia z CSV na DB)
-⏳ Fáza 3 – React Frontend – plánované
-```
-
----
-
-## 👨‍💻 Autor
+## 👤 Autor
 **Peter Pčolinský**  
-📍 Slovensko  
-🎯 Cieľ: stať sa **Junior Java Developerom v roku 2026**  
-🔗 GitHub: https://github.com/PeterPcolinsky
-
----
-
-**🇬🇧 [English version →](README_EN.md)**
+GitHub: [PeterPcolinsky](https://github.com/PeterPcolinsky)
