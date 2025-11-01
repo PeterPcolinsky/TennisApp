@@ -1,150 +1,116 @@
-# 🎾 TennisApp – REST API for Managing Tennis Matches
+# 🎾 TennisApp – REST API (Spring Boot)
 
-## 🧩 Project Overview
-TennisApp is a multi-layered Spring Boot application that manages tennis players, matches, and statistics.  
-The project supports a **dual data mode**:
-- **CSV mode (default)** – data is stored in local CSV files.
-- **JPA mode (profile `h2`)** – data is stored in an embedded H2 database using Spring Data JPA and Hibernate.
+A complete Java (Spring Boot) application for managing tennis players and matches via REST API.  
+Supports both **CSV** and **MySQL (JPA)** modes, allowing full CRUD operations.
 
 ---
 
-## ⚙️ Technologies Used
-- **Java 23 (OpenJDK)**
-- **Spring Boot 3.3**
-- **Spring Web / REST API**
-- **Spring Data JPA + Hibernate**
-- **H2 Database (profile `h2`)**
-- **Lombok**
-- **JUnit 5**
-- **Postman (for endpoint testing)**
-- **Maven**
+## 🚀 Current Status
+
+✅ Fully functional REST API  
+✅ CRUD operations for players and matches  
+✅ Player statistics (wins, losses, win rate)  
+✅ Postman tests passed  
+✅ MySQL migration (Phase 7) completed  
+🔜 Phase 8 – Unit testing and refactor
 
 ---
 
-## 🧱 Project Structure
+## 🧩 Development Phases
+
+| Phase | Description | Status |
+|--------|--------------|--------|
+| 1 | CSV loading and saving | ✅ Done |
+| 2 | REST API for players and matches | ✅ Done |
+| 3 | Player statistics | ✅ Done |
+| 4 | DTO and validation | ✅ Done |
+| 5 | Exception handling | ✅ Done |
+| 6 | JPA integration (H2 DB) | ✅ Done |
+| 7 | MySQL migration (JPA + DataSeeder) | ✅ Done |
+| 8 | Unit tests & refactor | 🔜 Upcoming |
+| 9 | React frontend (Leaderboard UI) | 🔜 Future |
+
+---
+
+## 🗂️ Project Structure
 
 ```
-tenis/
- ├── data/
- │   ├── players.csv
- │   ├── matches.csv
- │
- ├── src/main/java/sk/peter/tenis/
- │   ├── controller/
- │   │    ├── PlayerController.java
- │   │    ├── MatchController.java
- │   │    └── StatsController.java
- │   │
- │   ├── dto/
- │   │    ├── PlayerDto.java
- │   │    ├── MatchDto.java
- │   │    └── LeaderboardDto.java
- │   │
- │   ├── entity/
- │   │    ├── PlayerEntity.java
- │   │    └── MatchEntity.java
- │   │
- │   ├── repository/
- │   │    ├── PlayerRepository.java
- │   │    └── MatchRepository.java
- │   │
- │   ├── service/
- │   │    ├── PlayerService.java
- │   │    ├── MatchService.java
- │   │    ├── StatsService.java
- │   │    ├── CsvService.java
- │   │    └── jpa/
- │   │         ├── PlayerJpaService.java
- │   │         ├── MatchJpaService.java
- │   │         └── StatsJpaService.java
- │   │
- │   ├── exception/
- │   │    ├── NotFoundException.java
- │   │    └── ApiExceptionHandler.java
- │   │
- │   └── TenisApiApplication.java
- │
- ├── src/main/resources/
- │   ├── application.properties
- │   └── application-h2.properties
- │
- └── pom.xml
+src/
+ ├─ main/
+ │   ├─ java/sk/peter/tenis/
+ │   │   ├─ controller/
+ │   │   ├─ dto/
+ │   │   ├─ entity/
+ │   │   ├─ exception/
+ │   │   ├─ model/
+ │   │   ├─ repository/
+ │   │   ├─ service/
+ │   │   │   ├─ jpa/
+ │   │   │   └─ CsvService.java
+ │   │   ├─ DataSeeder.java         ← NEW (imports CSV → MySQL at startup)
+ │   │   └─ TenisApiApplication.java
+ │   └─ resources/
+ │       ├─ application.properties
+ │       ├─ application-h2.properties
+ │       └─ application-mysql.properties   ← NEW (MySQL configuration)
+ ├─ test/
+ │   ├─ PlayerControllerTest.java
+ │   ├─ MatchControllerTest.java
+ │   └─ StatsControllerTest.java
+ └─ data/
+     ├─ players.csv
+     └─ matches.csv
 ```
 
 ---
 
-## 🧭 Development Phases
+## ⚙️ MySQL Profile
 
-| Phase | Description |
-|-------|--------------|
-| **1** | Console application (CSV) |
-| **2** | REST API – CSV mode |
-| **3** | DTO and Controllers |
-| **4** | Player statistics and leaderboard (CSV) |
-| **5** | **JPA Integration (H2, Hibernate)** – PlayerEntity, MatchEntity, StatsJpaService |
-| **6** | **CRUD for Players and Matches (JPA)** – PlayerJpaService, MatchJpaService, Dual Data Mode (CSV ↔ H2) |
+Run the app with the `mysql` profile to use a real MySQL database instead of H2.
 
----
-
-## 🗄️ Application Modes
-
-### 🔹 CSV Mode (default)
-Data is read and written from/to `players.csv` and `matches.csv`.
-
-### 🔹 JPA / H2 Mode
-Data is stored in the H2 database (`./data/tenisdb.mv.db`).
-
-#### Activation in IntelliJ IDEA
-Go to **Run Configuration → Modify options → Add VM options** and add:
-```
--Dspring.profiles.active=h2
-```
-Then check the console log:
-```
-The following 1 profile is active: "h2"
+### Example (application-mysql.properties)
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/tennisapp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=root
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+logging.level.org.hibernate.SQL=DEBUG
 ```
 
 ---
 
-## 🚀 How to Run the Application
+## 🧠 Testing via Postman
 
-1. Import the project as a **Maven Project**.  
-2. Run `TenisApiApplication.java`.  
-3. Verify in logs whether the active profile is CSV or H2.  
-4. Test the endpoints using **Postman**:
-
-| Method | Endpoint | Description |
-|---------|-----------|-------------|
-| GET | `/api/players` | Retrieve all players |
-| POST | `/api/players` | Add a new player |
-| DELETE | `/api/players/{name}` | Delete a player |
-| GET | `/api/matches` | Retrieve all matches |
-| POST | `/api/matches` | Add a new match |
-| DELETE | `/api/matches/{playerA}/{playerB}/{date}/{score}` | Delete a match |
-| GET | `/api/stats/leaderboard` | Get player leaderboard |
-| GET | `/api/stats/player?name=Peter` | Get stats for a specific player |
-| GET | `/api/stats/export` | Export leaderboard as CSV |
+| Operation | Endpoint | Description |
+|------------|-----------|-------------|
+| GET | `/api/players` | Returns all players |
+| POST | `/api/players` | Adds a new player |
+| PUT | `/api/players/{name}` | Updates player info |
+| DELETE | `/api/players/{name}` | Deletes a player |
+| GET | `/api/matches` | Returns all matches |
+| POST | `/api/matches` | Adds a new match |
+| PUT | `/api/matches/{id}` | Updates match by ID |
+| DELETE | `/api/matches/{id}` | Deletes match by ID |
 
 ---
 
-## 🧪 Testing
-All endpoints were tested using **Postman**:  
-- CRUD operations for players and matches  
-- Player and date filters  
-- Statistics and CSV export  
-✅ All requests returned `200 OK`.
+## 🧾 Database Integration
+
+✅ Automatic CSV → MySQL import via `DataSeeder` at startup  
+✅ Real tables `players` and `matches` (phpMyAdmin verified)  
+✅ Full CRUD persistence through Hibernate JPA  
+✅ Instant DB sync – no manual refresh required
 
 ---
 
-## 🧩 Roadmap
+## 📅 Next Step
 
-- 🔜 **Phase 7** – Migrate from H2 to MySQL  
-- 🔜 **Phase 8** – Unit testing and refactoring  
-- 🔜 **Phase 9** – Frontend (React) for leaderboard and statistics  
-- 🔜 **Phase 10** – Dockerization and CI/CD pipeline  
+➡️ **Phase 8 – Unit testing and refactor (Player, Match, Stats controllers)**  
+➡️ **Phase 9 – React frontend (Leaderboard UI)**
 
 ---
 
-## 👤 Author
-**Peter Pčolinský**  
-GitHub: [PeterPcolinsky](https://github.com/PeterPcolinsky)
+**Author:** Peter Pčolinský  
+**GitHub:** [PeterPcolinsky](https://github.com/PeterPcolinsky)
