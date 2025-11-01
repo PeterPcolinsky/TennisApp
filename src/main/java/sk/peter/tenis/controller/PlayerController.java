@@ -1,6 +1,7 @@
 package sk.peter.tenis.controller;
 
 import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sk.peter.tenis.dto.PlayerDto;
 import sk.peter.tenis.entity.PlayerEntity;
@@ -58,10 +59,8 @@ public class PlayerController {
     @PostMapping
     public Object createPlayer(@RequestBody PlayerDto playerDto) {
         if (isJpaActive()) {
-            // pretypovanie String -> PlayerType
-            sk.peter.tenis.model.PlayerType type =
-                    sk.peter.tenis.model.PlayerType.fromInput(playerDto.getType());
-
+            // typ hráča
+            sk.peter.tenis.model.PlayerType type = sk.peter.tenis.model.PlayerType.fromInput(playerDto.getType());
             if (type == null) {
                 try {
                     type = sk.peter.tenis.model.PlayerType.valueOf(playerDto.getType().trim().toUpperCase());
@@ -70,14 +69,33 @@ public class PlayerController {
                 }
             }
 
-            PlayerEntity entity = new PlayerEntity(
+            // vytvor model Player (nie entitu!)
+            sk.peter.tenis.model.Player player = new sk.peter.tenis.model.Player(
                     playerDto.getName(),
                     playerDto.getAge(),
                     type
             );
-            return jpaService.save(entity);
+
+            // ulož cez JPA service
+            jpaService.save(player);
+
+            // vráť uloženého hráča (ako odpoveď)
+            return player;
         }
+
+        // CSV režim
         return csvService.createFromDto(playerDto);
+    }
+
+    @PutMapping("/{name}")
+    public ResponseEntity<?> updatePlayer(@PathVariable String name, @RequestBody PlayerDto dto) {
+        if (isJpaActive()) {
+            Player updated = jpaService.update(name, dto);
+            return ResponseEntity.ok(updated);
+        } else {
+            Player updated = csvService.update(name, dto);
+            return ResponseEntity.ok(updated);
+        }
     }
 
     @DeleteMapping("/{name}")

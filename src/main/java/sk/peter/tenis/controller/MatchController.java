@@ -1,11 +1,13 @@
 package sk.peter.tenis.controller;
 
 import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sk.peter.tenis.dto.MatchDto;
+import sk.peter.tenis.dto.MatchUpdateDto;
 import sk.peter.tenis.entity.MatchEntity;
-import sk.peter.tenis.entity.PlayerEntity;
 import sk.peter.tenis.model.Match;
+import sk.peter.tenis.model.Player;
 import sk.peter.tenis.service.MatchService;
 import sk.peter.tenis.service.jpa.MatchJpaService;
 import sk.peter.tenis.service.jpa.PlayerJpaService;
@@ -14,9 +16,6 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Controller pre zápasy (CSV + JPA režim).
- */
 @RestController
 @RequestMapping("/api/matches")
 public class MatchController {
@@ -37,11 +36,12 @@ public class MatchController {
     }
 
     private boolean isJpaActive() {
-        return Arrays.stream(env.getActiveProfiles()).anyMatch(p -> p.equalsIgnoreCase("h2"));
+        // ⚠️ opravené – kontrolujeme aj "mysql"
+        return Arrays.stream(env.getActiveProfiles())
+                .anyMatch(p -> p.equalsIgnoreCase("mysql") || p.equalsIgnoreCase("h2"));
     }
 
-    // ---------------- CRUD ----------------
-
+    // -------------------- GET ALL --------------------
     @GetMapping
     public List<?> getAllMatches() {
         if (isJpaActive()) {
@@ -50,57 +50,43 @@ public class MatchController {
         return csvService.findAll();
     }
 
-    /**
-     * Vytvorí nový zápas.
-     * Ak beží JPA profil (h2), hráčov vyhľadá priamo v databáze podľa mena.
-     */
+    // -------------------- POST --------------------
     @PostMapping
-    public Object createMatch(@RequestBody MatchDto dto) {
+    public Object createMatch(@RequestBody MatchDto matchDto) {
         if (isJpaActive()) {
-            // nájdeme hráčov podľa mena (case-insensitive)
-            PlayerEntity playerA = playerJpaService.findAll().stream()
-                    .filter(p -> p.getName().equalsIgnoreCase(dto.getPlayerA()))
-                    .findFirst()
-                    .orElse(null);
+            Player playerA = new Player(matchDto.getPlayerA(), 0, null);
+            Player playerB = new Player(matchDto.getPlayerB(), 0, null);
+            Match match = new Match(playerA, playerB, matchDto.getScore(), LocalDate.parse(matchDto.getDate()));
 
-            PlayerEntity playerB = playerJpaService.findAll().stream()
-                    .filter(p -> p.getName().equalsIgnoreCase(dto.getPlayerB()))
-                    .findFirst()
-                    .orElse(null);
-
-            if (playerA == null || playerB == null) {
-                throw new IllegalArgumentException("One or both players not found in database");
-            }
-
-            MatchEntity entity = new MatchEntity(
-                    playerA,
-                    playerB,
-                    dto.getScore(),
-                    dto.getDate() != null ? LocalDate.parse(dto.getDate()) : null
-            );
-
-            return jpaService.save(entity);
+            jpaService.save(match);
+            return match;
         }
-
-        return csvService.createFromDto(dto);
+        return csvService.createFromDto(matchDto);
     }
 
-    /**
-     * Vymaže zápas podľa hráčov, dátumu a výsledku.
-     */
-    @DeleteMapping("/{playerA}/{playerB}/{date}/{score}")
-    public void deleteMatch(@PathVariable String playerA,
-                            @PathVariable String playerB,
-                            @PathVariable String date,
-                            @PathVariable String score) {
+    // -------------------- PUT podľa ID (hlavná úprava) --------------------
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateMatch(@PathVariable Long id, @RequestBody MatchUpdateDto dto) {
         if (isJpaActive()) {
-            jpaService.findAll().stream()
-                    .filter(m -> m.getResult().equalsIgnoreCase(score))
-                    .filter(m -> m.getDate().toString().equalsIgnoreCase(date))
-                    .findFirst()
-                    .ifPresent(m -> jpaService.deleteById(m.getId()));
+            try {
+                Match updated = jpaService.update(id, dto);
+                return ResponseEntity.ok(updated);
+            } catch (RuntimeException e) {
+                return ResponseEntity.notFound().build();
+            }
         } else {
-            csvService.delete(playerA, playerB, date, score);
+            return ResponseEntity.badRequest().body("Update by ID is supported only in JPA mode.");
+        }
+    }
+
+    // -------------------- DELETE podľa ID --------------------
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteMatchById(@PathVariable Long id) {
+        if (isJpaActive()) {
+            jpaService.deleteById(id);
+            return ResponseEntity.ok("🗑️ Match with ID " + id + " deleted.");
+        } else {
+            return ResponseEntity.badRequest().body("Delete by ID is supported only in JPA mode.");
         }
     }
 }

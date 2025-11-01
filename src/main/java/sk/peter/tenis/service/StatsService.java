@@ -1,6 +1,6 @@
 package sk.peter.tenis.service;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import sk.peter.tenis.dto.PlayerStatsDto;
 import sk.peter.tenis.model.Match;
@@ -11,15 +11,20 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Služba pre výpočet štatistík hráčov na základe CSV dát.
  */
 @Service
-@RequiredArgsConstructor
+@Profile("h2")
 public class StatsService {
 
     private final MatchService matchService;
+
+    public StatsService(MatchService matchService) {
+        this.matchService = matchService;
+    }
 
     /**
      * Vypočíta štatistiky pre daného hráča.
@@ -80,13 +85,7 @@ public class StatsService {
 
         double winRate = total == 0 ? 0.0 : round((wins * 100.0) / total);
 
-        return PlayerStatsDto.builder()
-                .name(playerName)
-                .matches(total)
-                .wins(wins)
-                .losses(losses)
-                .winRatePercent(winRate)
-                .build();
+        return new PlayerStatsDto(playerName, total, wins, losses, winRate);
     }
 
     // Pomocné metódy

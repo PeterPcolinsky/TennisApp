@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * API (DTO) rovnaké.
  */
 @Service
-@Profile("h2")
+@Profile({"h2", "mysql"})
 public class StatsJpaService {
 
     private final MatchRepository matchRepo;
