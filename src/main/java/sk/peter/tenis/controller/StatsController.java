@@ -1,6 +1,5 @@
 package sk.peter.tenis.controller;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -8,21 +7,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sk.peter.tenis.dto.LeaderboardDto;
 import sk.peter.tenis.dto.PlayerStatsDto;
-import sk.peter.tenis.service.jpa.StatsJpaService;
+import sk.peter.tenis.service.StatsService;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/stats")
-@Profile({"h2", "mysql"})
 public class StatsController {
 
-    private final StatsJpaService statsService;
+    private final StatsService statsService;
 
-    public StatsController(StatsJpaService statsService) {
+    public StatsController(StatsService statsService) {
         this.statsService = statsService;
     }
 
@@ -31,10 +30,19 @@ public class StatsController {
         return statsService.getLeaderboard();
     }
 
+    @GetMapping("/top")
+    public List<LeaderboardDto> getTopPlayers(@RequestParam(defaultValue = "3") int limit) {
+        return statsService.getLeaderboard().stream()
+                .filter(p -> p.getMatches() > 0 && p.getWinRatePercent() > 0)
+                .sorted(Comparator.comparingDouble(LeaderboardDto::getWinRatePercent).reversed())
+                .limit(limit)
+                .toList();
+    }
+
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportCsv() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Meno;Zápasy;Výhry;Prehry;WinRate(%)\n");
+        sb.append("Meno;Zapasy;Vyhry;Prehry;WinRate(%)\n");
         for (LeaderboardDto row : statsService.getLeaderboard()) {
             sb.append(row.getName()).append(";")
                     .append(row.getMatches()).append(";")
@@ -57,8 +65,9 @@ public class StatsController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
 
-        LocalDate fromDate = from != null ? LocalDate.parse(from) : null;
-        LocalDate toDate = to != null ? LocalDate.parse(to) : null;
+        LocalDate fromDate = (from != null && !from.isBlank()) ? LocalDate.parse(from) : null;
+        LocalDate toDate = (to != null && !to.isBlank()) ? LocalDate.parse(to) : null;
+
         return statsService.getPlayerStats(name, fromDate, toDate);
     }
 }

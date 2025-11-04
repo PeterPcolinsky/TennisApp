@@ -1,9 +1,12 @@
 package sk.peter.tenis.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sk.peter.tenis.dto.MatchDto;
+import sk.peter.tenis.dto.MatchResponseDto;
 import sk.peter.tenis.dto.MatchUpdateDto;
 import sk.peter.tenis.entity.MatchEntity;
 import sk.peter.tenis.model.Match;
@@ -13,8 +16,8 @@ import sk.peter.tenis.service.jpa.MatchJpaService;
 import sk.peter.tenis.service.jpa.PlayerJpaService;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/matches")
@@ -36,35 +39,65 @@ public class MatchController {
     }
 
     private boolean isJpaActive() {
-        // ⚠️ opravené – kontrolujeme aj "mysql"
         return Arrays.stream(env.getActiveProfiles())
-                .anyMatch(p -> p.equalsIgnoreCase("mysql") || p.equalsIgnoreCase("h2"));
+                .anyMatch(p -> p.equalsIgnoreCase("mysql"));
+    }
+
+    private MatchResponseDto toDto(MatchEntity e) {
+        return new MatchResponseDto(
+                e.getId(),
+                e.getPlayerA().getName(),
+                e.getPlayerB().getName(),
+                e.getResult(),
+                e.getDate()
+        );
     }
 
     // -------------------- GET ALL --------------------
     @GetMapping
-    public List<?> getAllMatches() {
+    public ResponseEntity<?> getAllMatches() {
         if (isJpaActive()) {
-            return jpaService.findAll();
+            List<MatchResponseDto> out = jpaService.findAll()
+                    .stream()
+                    .map(this::toDto)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(out);
         }
-        return csvService.findAll();
+        return ResponseEntity.ok(csvService.findAll());
     }
 
     // -------------------- POST --------------------
     @PostMapping
-    public Object createMatch(@RequestBody MatchDto matchDto) {
+    public ResponseEntity<?> createMatch(@RequestBody @Valid MatchDto matchDto) {
         if (isJpaActive()) {
             Player playerA = new Player(matchDto.getPlayerA(), 0, null);
             Player playerB = new Player(matchDto.getPlayerB(), 0, null);
             Match match = new Match(playerA, playerB, matchDto.getScore(), LocalDate.parse(matchDto.getDate()));
 
-            jpaService.save(match);
-            return match;
+            var saved = jpaService.save(match);
+            if (saved == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Player(s) not found"));
+            }
+            // ✅ vraciame DTO, nie entitu
+            return ResponseEntity.status(HttpStatus.CREATED).body(toDto(saved));
         }
-        return csvService.createFromDto(matchDto);
+
+        // CSV režim
+        try {
+            var created = csvService.createFromDto(matchDto);
+            if (created == null || created.getPlayerA() == null || created.getPlayerB() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Player(s) not found"));
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", "CSV operation failed"));
+        }
     }
 
-    // -------------------- PUT podľa ID (hlavná úprava) --------------------
+    // -------------------- PUT podľa ID (JPA) --------------------
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMatch(@PathVariable Long id, @RequestBody MatchUpdateDto dto) {
         if (isJpaActive()) {
@@ -72,21 +105,28 @@ public class MatchController {
                 Match updated = jpaService.update(id, dto);
                 return ResponseEntity.ok(updated);
             } catch (RuntimeException e) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.badRequest().body(Map.of("error", "Match not found"));
             }
-        } else {
-            return ResponseEntity.badRequest().body("Update by ID is supported only in JPA mode.");
         }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Update by ID not supported in CSV mode"));
     }
 
-    // -------------------- DELETE podľa ID --------------------
+    // -------------------- DELETE podľa ID (JPA) --------------------
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMatchById(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMatchById(@PathVariable Long id) {
         if (isJpaActive()) {
-            jpaService.deleteById(id);
-            return ResponseEntity.ok("🗑️ Match with ID " + id + " deleted.");
-        } else {
-            return ResponseEntity.badRequest().body("Delete by ID is supported only in JPA mode.");
+            try {
+                jpaService.deleteById(id);
+                return ResponseEntity.noContent().build();
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().build();
+            }
         }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .header("error", "Delete by ID not supported in CSV mode")
+                .build();
     }
 }

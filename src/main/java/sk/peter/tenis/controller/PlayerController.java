@@ -1,6 +1,7 @@
 package sk.peter.tenis.controller;
 
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sk.peter.tenis.dto.PlayerDto;
@@ -57,7 +58,9 @@ public class PlayerController {
     }
 
     @PostMapping
-    public Object createPlayer(@RequestBody PlayerDto playerDto) {
+    public ResponseEntity<Object> createPlayer(@RequestBody PlayerDto playerDto) {
+        Object savedPlayer;
+
         if (isJpaActive()) {
             // typ hráča
             sk.peter.tenis.model.PlayerType type = sk.peter.tenis.model.PlayerType.fromInput(playerDto.getType());
@@ -69,7 +72,7 @@ public class PlayerController {
                 }
             }
 
-            // vytvor model Player (nie entitu!)
+            // vytvor model Player
             sk.peter.tenis.model.Player player = new sk.peter.tenis.model.Player(
                     playerDto.getName(),
                     playerDto.getAge(),
@@ -78,13 +81,14 @@ public class PlayerController {
 
             // ulož cez JPA service
             jpaService.save(player);
-
-            // vráť uloženého hráča (ako odpoveď)
-            return player;
+            savedPlayer = player;
+        } else {
+            // CSV režim
+            savedPlayer = csvService.createFromDto(playerDto);
         }
 
-        // CSV režim
-        return csvService.createFromDto(playerDto);
+        // ✅ REST štandard: 201 CREATED
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedPlayer);
     }
 
     @PutMapping("/{name}")
@@ -99,9 +103,9 @@ public class PlayerController {
     }
 
     @DeleteMapping("/{name}")
-    public void deletePlayer(@PathVariable String name) {
+    public ResponseEntity<Void> deletePlayer(@PathVariable String name) {
         if (isJpaActive()) {
-            // Pre JPA režim by sme mohli mazať podľa ID, ale zachovajme názov
+            // JPA režim – mazanie podľa mena
             jpaService.findAll().stream()
                     .filter(p -> p.getName().equalsIgnoreCase(name))
                     .findFirst()
@@ -109,5 +113,8 @@ public class PlayerController {
         } else {
             csvService.delete(name);
         }
+
+        // ✅ REST štandard: 204 – No Content
+        return ResponseEntity.noContent().build();
     }
 }

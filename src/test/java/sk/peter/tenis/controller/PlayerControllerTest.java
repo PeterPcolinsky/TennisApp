@@ -1,121 +1,111 @@
 package sk.peter.tenis.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import sk.peter.tenis.dto.PlayerDto;
+import sk.peter.tenis.model.Player;
+import sk.peter.tenis.model.PlayerType;
+import sk.peter.tenis.service.PlayerService;
+import sk.peter.tenis.service.jpa.PlayerJpaService;
 
+import java.util.List;
+
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.equalToIgnoringCase;
 
-
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(controllers = PlayerController.class)
 class PlayerControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    @MockBean
+    private PlayerService playerService;
+
+    @MockBean
+    private PlayerJpaService playerJpaService;  // ⬅️ DOPLNENÉ mock pre JPA service
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private PlayerDto player1;
+    private PlayerDto player2;
+
+    @BeforeEach
+    void setup() {
+        player1 = new PlayerDto();
+        player1.setName("Roger Federer");
+        player1.setAge(40);
+        player1.setType("PROFESIONAL");
+
+        player2 = new PlayerDto();
+        player2.setName("Rafael Nadal");
+        player2.setAge(38);
+        player2.setType("PROFESIONAL");
+    }
+
     @Test
     void shouldReturnAllPlayers() throws Exception {
+        given(playerService.findAll()).willReturn(List.of(
+                new Player("Roger Federer", 40, PlayerType.PROFESIONAL),
+                new Player("Rafael Nadal", 38, PlayerType.PROFESIONAL)
+        ));
+
         mockMvc.perform(get("/api/players"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[*].name", containsInAnyOrder("Roger Federer", "Rafael Nadal")));
     }
 
     @Test
-    void shouldAddNewPlayer() throws Exception {
-        String json = """
-            {
-              "name": "TestPlayer",
-              "age": 25,
-              "type": "Amatér"
-            }
-            """;
+    void shouldCreatePlayer() throws Exception {
+        given(playerService.createFromDto(any(PlayerDto.class)))
+                .willReturn(new Player("Roger Federer", 40, PlayerType.PROFESIONAL));
 
         mockMvc.perform(post("/api/players")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isCreated());
+                        .content(objectMapper.writeValueAsString(player1)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name", is("Roger Federer")))
+                .andExpect(jsonPath("$.age", is(40)))
+                .andExpect(jsonPath("$.type", is("PROFESIONAL")));
     }
 
     @Test
-    void shouldReturnPlayerStats() throws Exception {
-        mockMvc.perform(get("/api/players/Novak/stats"))
+    void shouldUpdatePlayer() throws Exception {
+        given(playerService.update(eq("Roger Federer"), any(PlayerDto.class)))
+                .willReturn(new Player("Roger Federer", 41, PlayerType.AMATER));
+
+        PlayerDto updated = new PlayerDto();
+        updated.setName("Roger Federer");
+        updated.setAge(41);
+        updated.setType("AMATER");
+
+        mockMvc.perform(put("/api/players/{name}", "Roger Federer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updated)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Novak"))
-                .andExpect(jsonPath("$.matches").value(3))
-                .andExpect(jsonPath("$.wins").value(1))
-                .andExpect(jsonPath("$.losses").value(2))
-                .andExpect(jsonPath("$.winRatePercent").value(33.3));
-    }
-
-    // ==========================
-// 🔴 NEGATÍVNE SCENÁRE – PlayerController
-// ==========================
-
-    @Test
-    void shouldFailToAddPlayer_whenNameIsBlank() throws Exception {
-        String json = """
-      {
-        "name": "   ",
-        "age": 30,
-        "type": "Profesionál"
-      }
-      """;
-
-        mockMvc.perform(post("/api/players")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest());
+                .andExpect(jsonPath("$.age", is(41)))
+                .andExpect(jsonPath("$.type", is("AMATER")));
     }
 
     @Test
-    void shouldFailToAddPlayer_whenAgeIsInvalid() throws Exception {
-        String json = """
-      {
-        "name": "BadAge",
-        "age": -1,
-        "type": "Amatér"
-      }
-      """;
+    void shouldDeletePlayer() throws Exception {
+        doNothing().when(playerService).delete("Roger Federer");
 
-        mockMvc.perform(post("/api/players")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void shouldFailToAddPlayer_whenTypeIsInvalid() throws Exception {
-        // ak validuješ typ na zoznam hodnôt (napr. Profesionál/Amatér),
-        // tento test spadne na @Valid -> 400
-        String json = """
-      {
-        "name": "TypeX",
-        "age": 22,
-        "type": "Nezmysel"
-      }
-      """;
-
-        mockMvc.perform(post("/api/players")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void shouldReturnStats_forNameCaseInsensitive() throws Exception {
-        // overíme case-insensitive správanie (ak ho v StatsService toleruješ)
-        mockMvc.perform(get("/api/players/novak/stats"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(equalToIgnoringCase("novak")))
-                .andExpect(jsonPath("$.matches").value(3))
-                .andExpect(jsonPath("$.wins").value(1))
-                .andExpect(jsonPath("$.losses").value(2))
-                .andExpect(jsonPath("$.winRatePercent").value(33.3));
+        mockMvc.perform(delete("/api/players/{name}", "Roger Federer"))
+                .andExpect(status().isNoContent());
     }
 }

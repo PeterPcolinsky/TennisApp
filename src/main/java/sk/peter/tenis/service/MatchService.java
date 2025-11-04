@@ -48,7 +48,7 @@ public class MatchService {
             Player a = findPlayerByExactName(players, dto.getPlayerA());
             Player b = findPlayerByExactName(players, dto.getPlayerB());
             if (a == null || b == null) {
-                // nechajme túto výnimku PREJSŤ von – zachytí ju ApiExceptionHandler (400)
+                // ⚠️ Toto musí ostať výnimka – test očakáva BAD_REQUEST
                 throw new IllegalArgumentException("Player(s) not found");
             }
 
@@ -58,7 +58,8 @@ public class MatchService {
 
             // 4) kontrola duplicity
             if (matchExists(matches, m)) {
-                return m; // už existuje – nerobíme duplicitný zápis
+                // ⚠️ Ak už zápas existuje, len ho vráť, ale NEulož znova
+                return m;
             }
 
             // 5) ulož

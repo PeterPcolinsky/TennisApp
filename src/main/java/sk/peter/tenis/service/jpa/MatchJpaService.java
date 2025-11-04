@@ -1,5 +1,6 @@
 package sk.peter.tenis.service.jpa;
 
+import jakarta.transaction.Transactional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import sk.peter.tenis.dto.MatchUpdateDto;
@@ -27,82 +28,73 @@ public class MatchJpaService {
         this.playerRepository = playerRepository;
     }
 
-    // -------------------- SAVE --------------------
-    public void save(Match match) {
+    // ---------- CREATE ----------
+    @Transactional
+    public MatchEntity save(Match match) {
         Player playerA = match.getPlayerA();
         Player playerB = match.getPlayerB();
 
-        Optional<PlayerEntity> playerAEntity = playerRepository.findByNameIgnoreCase(playerA.getName());
-        Optional<PlayerEntity> playerBEntity = playerRepository.findByNameIgnoreCase(playerB.getName());
+        // Skús nájsť hráčov podľa mena
+        var playerAEntity = playerRepository.findByNameIgnoreCase(playerA.getName());
+        var playerBEntity = playerRepository.findByNameIgnoreCase(playerB.getName());
 
+        // Ak niektorý hráč chýba -> vráť null (test očakáva 400 pre chýbajúceho hráča)
         if (playerAEntity.isEmpty() || playerBEntity.isEmpty()) {
-            System.err.println("⚠️ Nepodarilo sa nájsť hráčov pre zápas: "
-                    + playerA.getName() + " vs " + playerB.getName());
-            return;
+            return null;
         }
 
+        // Vytvor zápas
         MatchEntity entity = new MatchEntity();
         entity.setPlayerA(playerAEntity.get());
         entity.setPlayerB(playerBEntity.get());
         entity.setResult(match.getScore());
         entity.setDate(match.getDate());
 
-        matchRepository.save(entity);
-        System.out.println("➕ Uložený zápas: " +
-                playerA.getName() + " vs " + playerB.getName() + " (" + match.getScore() + ")");
+        return matchRepository.save(entity);
     }
 
-    // -------------------- UPDATE podľa ID --------------------
+    // ---------- UPDATE ----------
+    @Transactional
     public Match update(Long id, MatchUpdateDto dto) {
-        Optional<MatchEntity> optional = matchRepository.findById(id);
-        if (optional.isEmpty()) {
-            throw new RuntimeException("Match not found with ID: " + id);
-        }
+        var existing = matchRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
 
-        MatchEntity entity = optional.get();
+        String newScore = (dto.getNewScore() != null && !dto.getNewScore().isBlank())
+                ? dto.getNewScore().trim()
+                : existing.getResult();
 
-        if (dto.getNewScore() != null && !dto.getNewScore().isBlank()) {
-            entity.setResult(dto.getNewScore());
-        }
+        LocalDate newDate = (dto.getNewDate() != null && !dto.getNewDate().isBlank())
+                ? LocalDate.parse(dto.getNewDate().trim())
+                : existing.getDate();
 
-        if (dto.getNewDate() != null && !dto.getNewDate().isBlank()) {
-            entity.setDate(LocalDate.parse(dto.getNewDate()));
-        }
+        existing.setResult(newScore);
+        existing.setDate(newDate);
 
-        MatchEntity saved = matchRepository.save(entity);
-        System.out.println("🔁 Aktualizovaný zápas: " +
-                saved.getPlayerA().getName() + " vs " + saved.getPlayerB().getName());
+        var saved = matchRepository.save(existing);
 
         return new Match(
-                new Player(saved.getPlayerA().getName(), saved.getPlayerA().getAge(), saved.getPlayerA().getType()),
-                new Player(saved.getPlayerB().getName(), saved.getPlayerB().getAge(), saved.getPlayerB().getType()),
+                new Player(saved.getPlayerA().getName(), 0, null),
+                new Player(saved.getPlayerB().getName(), 0, null),
                 saved.getResult(),
                 saved.getDate()
         );
     }
 
-    // -------------------- FIND ALL --------------------
+    // ---------- DELETE ----------
+    public void deleteById(Long id) {
+        if (!matchRepository.existsById(id)) {
+            throw new RuntimeException("Match ID not found");
+        }
+        matchRepository.deleteById(id);
+    }
+
+    // ---------- FIND ALL ----------
     public List<MatchEntity> findAll() {
         return matchRepository.findAll();
     }
 
-    // -------------------- FIND BY ID --------------------
-    public Optional<MatchEntity> findById(Long id) {
-        return matchRepository.findById(id);
-    }
-
-    // -------------------- DELETE BY ID --------------------
-    public void deleteById(Long id) {
-        if (matchRepository.existsById(id)) {
-            matchRepository.deleteById(id);
-            System.out.println("🗑️ Zmazaný zápas s ID: " + id);
-        } else {
-            System.out.println("⚠️ Zápas s ID " + id + " neexistuje.");
-        }
-    }
-
-    // -------------------- SEARCH --------------------
-    public List<MatchEntity> search(String name, java.time.LocalDate from, java.time.LocalDate to) {
-        return matchRepository.search(name, from, to);
+    // ---------- EXISTS ----------
+    public boolean existsById(Long id) {
+        return matchRepository.existsById(id);
     }
 }
