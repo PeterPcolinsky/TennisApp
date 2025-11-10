@@ -6,18 +6,30 @@ export default function PlayersTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  async function refresh() {
+    try {
+      const data = await api.getPlayers();
+      setPlayers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await api.getPlayers();
-        setPlayers(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    refresh();
   }, []);
+
+  async function deletePlayer(name) {
+    if (!window.confirm(`Naozaj chceš vymazať hráča "${name}"?`)) return;
+    try {
+      await api.deletePlayer(name);
+      await refresh(); // znovu načítaj zoznam po zmazaní
+    } catch (err) {
+      alert(`Chyba pri mazaní: ${err.message}`);
+    }
+  }
 
   if (loading) return <p>Načítavam hráčov...</p>;
   if (error) return <p style={{ color: 'red' }}>Chyba: {error}</p>;
@@ -32,6 +44,7 @@ export default function PlayersTable() {
             <th>Meno</th>
             <th>Vek</th>
             <th>Typ</th>
+            <th>Akcia</th>
           </tr>
         </thead>
         <tbody>
@@ -40,6 +53,9 @@ export default function PlayersTable() {
               <td>{p.name}</td>
               <td>{p.age}</td>
               <td>{p.type}</td>
+              <td>
+                <button onClick={() => deletePlayer(p.name)}>Vymazať</button>
+              </td>
             </tr>
           ))}
         </tbody>

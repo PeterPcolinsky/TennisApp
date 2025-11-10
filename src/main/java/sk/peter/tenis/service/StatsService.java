@@ -16,7 +16,7 @@ import java.util.ArrayList;
  * Služba pre výpočet štatistík hráčov na základe CSV dát.
  */
 @Service
-@Profile("h2")
+@Profile({"h2", "mysql"})
 public class StatsService {
 
     private final MatchService matchService;

@@ -33,7 +33,7 @@ public class PlayerController {
     }
 
     private boolean isJpaActive() {
-        return Arrays.stream(env.getActiveProfiles()).anyMatch(p -> p.equalsIgnoreCase("h2"));
+        return Arrays.stream(env.getActiveProfiles()).anyMatch(p -> p.equalsIgnoreCase("h2") || p.equalsIgnoreCase("mysql"));
     }
 
     // ---------------- CRUD ----------------
