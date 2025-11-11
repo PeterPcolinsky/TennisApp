@@ -15,7 +15,7 @@
     <artifactId>tenis</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>tenis</name>
-    <description>TenisApp REST API (CSV backend)</description>
+    <description>TennisMate – Full Stack App (Spring Boot + React)</description>
 
     <properties>
         <java.version>21</java.version>
@@ -23,13 +23,13 @@
     </properties>
 
     <dependencies>
-        <!-- Spring Data JPA (Phase 2) -->
+        <!-- Spring Data JPA (MySQL/H2 support) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- H2 database (dev/test) -->
+        <!-- H2 database (dev/test profile) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -49,20 +49,20 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Bean Validation (@Valid, anotácie na DTO) -->
+        <!-- Bean Validation (DTO @Valid annotations) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- Lombok (gettery/settery, @Data...) -->
+        <!-- Lombok (getters/setters, @Data, etc.) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- Testy -->
+        <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -72,10 +72,51 @@
 
     <build>
         <plugins>
+
+            <!-- 🎯 Plugin na build frontend-u (React + Vite) -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.12.1</version>
+
+                <configuration>
+                    <installDirectory>${project.basedir}/node</installDirectory>
+                </configuration>
+
+                <executions>
+                    <!-- Inštalácia Node.js a npm -->
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>v20.18.0</nodeVersion>
+                            <npmVersion>10.8.2</npmVersion>
+                        </configuration>
+                    </execution>
+
+                    <!-- Inštalácia závislostí a build -->
+                    <execution>
+                        <id>npm install and build</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <workingDirectory>tennisapp-frontend</workingDirectory>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 🧩 Spring Boot plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
+
 </project>

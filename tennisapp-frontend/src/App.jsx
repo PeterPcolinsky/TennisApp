@@ -6,21 +6,25 @@ import MatchesTable from "./components/MatchesTable";
 import AddMatchForm from "./components/AddMatchForm";
 
 export default function App() {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const refreshPlayers = () => setRefreshKey((k) => k + 1);
+  const [refreshPlayersKey, setRefreshPlayersKey] = useState(0);
+  const [refreshMatchesKey, setRefreshMatchesKey] = useState(0);
+
+  const refreshPlayers = () => setRefreshPlayersKey((k) => k + 1);
+  const refreshMatches = () => setRefreshMatchesKey((k) => k + 1);
 
   return (
     <div style={{ fontFamily: "system-ui, Arial", padding: 20, color: "white" }}>
-        <header className="navbar">
-          <div className="navbar-content">
-            <span className="logo">🎾 TennisMate</span>
-            <nav>
-              <a href="#">Domov</a>
-              <a href="#">O aplikácii</a>
-              <a href="#">Kontakt</a>
-            </nav>
-          </div>
-        </header>
+      <header className="navbar">
+        <div className="navbar-content">
+          <span className="logo">🎾 TennisMate</span>
+          <nav>
+            <a href="#">Domov</a>
+            <a href="#">O aplikácii</a>
+            <a href="#">Kontakt</a>
+          </nav>
+        </div>
+      </header>
+
       <h1 style={{ marginBottom: 30 }}>TennisMate 🎾</h1>
 
       {/* --- Pridanie hráča --- */}
@@ -32,7 +36,7 @@ export default function App() {
       {/* --- Zoznam hráčov --- */}
       <section>
         <h2>👥 Zoznam hráčov</h2>
-        <PlayersTable key={refreshKey} />
+        <PlayersTable key={refreshPlayersKey} />
       </section>
 
       {/* --- Rebríček hráčov --- */}
@@ -44,20 +48,20 @@ export default function App() {
       {/* --- Zoznam zápasov --- */}
       <section>
         <h2>📋 Zoznam zápasov</h2>
-        <MatchesTable />
+        <MatchesTable key={refreshMatchesKey} />
       </section>
 
       {/* --- Pridať zápas --- */}
       <section>
         <h2>➕ Pridať zápas</h2>
-        <AddMatchForm />
+        <AddMatchForm onMatchAdded={refreshMatches} />
       </section>
 
       {/* --- FOOTER --- */}
-            <footer className="footer">
-              <p>© {new Date().getFullYear()} Peter Pčolinský – Všetky práva vyhradené.</p>
-              <p className="dev-note">Developed by Peter Pčolinský</p>
-            </footer>
+      <footer className="footer">
+        <p>© {new Date().getFullYear()} Peter Pčolinský – Všetky práva vyhradené.</p>
+        <p className="dev-note">Developed by Peter Pčolinský</p>
+      </footer>
     </div>
   );
 }

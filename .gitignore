@@ -18,3 +18,8 @@ Thumbs.db
 
 *.mv.db
 *.lock.db
+
+# Frontend
+tennisapp-frontend/node_modules
+src/main/resources/static/*
+!src/main/resources/static/.gitkeep

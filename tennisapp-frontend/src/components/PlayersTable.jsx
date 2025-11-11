@@ -53,7 +53,7 @@ export default function PlayersTable() {
               <td>{p.age}</td>
               <td>{p.type}</td>
               <td>
-                <button className="delete" onClick={() => deleteMatch(p.name)}>Vymazať</button>
+                <button className="delete" onClick={() => deletePlayer(p.name)}>Vymazať</button>
               </td>
             </tr>
           ))}

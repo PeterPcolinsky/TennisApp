@@ -19,13 +19,13 @@ export default function MatchesTable() {
       }
     };
     fetchMatches();
-  }, []);
+  }, []); // React to refresh key in App.jsx (key triggers re-mount)
 
   const deleteMatch = async (id) => {
     if (!window.confirm("Naozaj chceš zmazať tento zápas?")) return;
     try {
       await api.deleteMatch(id);
-      setMatches(matches.filter((m) => m.id !== id));
+      setMatches((prev) => prev.filter((m) => m.id !== id));
     } catch (err) {
       alert("Chyba pri mazaní: " + err.message);
     }
@@ -57,7 +57,9 @@ export default function MatchesTable() {
               <td>{m.score}</td>
               <td>{m.date}</td>
               <td>
-                <button className="delete" onClick={() => deleteMatch(m.id)}>Vymazať</button>
+                <button className="delete" onClick={() => deleteMatch(m.id)}>
+                  Vymazať
+                </button>
               </td>
             </tr>
           ))}

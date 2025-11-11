@@ -16,12 +16,7 @@ export default function AddMatchForm({ onMatchAdded }) {
       return;
     }
 
-    const match = {
-      playerA,
-      playerB,
-      score,
-      date,
-    };
+    const match = { playerA, playerB, score, date };
 
     try {
       await api.addMatch(match);
@@ -30,7 +25,8 @@ export default function AddMatchForm({ onMatchAdded }) {
       setPlayerB("");
       setScore("");
       setDate("");
-      onMatchAdded?.(); // refresh tabuľky po pridaní
+
+      if (onMatchAdded) onMatchAdded(); // 🔁 refresh tabuľky po pridaní
     } catch (err) {
       setMessage("❌ Chyba pri ukladaní: " + err.message);
     }
@@ -38,7 +34,10 @@ export default function AddMatchForm({ onMatchAdded }) {
 
   return (
     <div style={{ marginBottom: 30 }}>
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}
+      >
         <input
           type="text"
           placeholder="Hráč A"
