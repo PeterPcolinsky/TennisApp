@@ -26,7 +26,6 @@ export default function LeaderboardTable() {
 
   return (
     <div>
-      <h2>🏆 Rebríček hráčov</h2>
       <table border="1" cellPadding="6">
         <thead>
           <tr>

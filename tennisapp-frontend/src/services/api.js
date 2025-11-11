@@ -65,4 +65,14 @@ export const api = {
       })
     );
   },
+
+  async addMatch(match) {
+    return handle(
+      await fetch(`${BASE_URL}/api/matches`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(match),
+      })
+    );
+  },
 };

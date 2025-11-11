@@ -37,7 +37,6 @@ export default function MatchesTable() {
 
   return (
     <div>
-      <h2>📋 Zoznam zápasov</h2>
       <table border="1" cellPadding="6">
         <thead>
           <tr>
@@ -58,7 +57,7 @@ export default function MatchesTable() {
               <td>{m.score}</td>
               <td>{m.date}</td>
               <td>
-                <button onClick={() => deleteMatch(m.id)}>Vymazať</button>
+                <button className="delete" onClick={() => deleteMatch(m.id)}>Vymazať</button>
               </td>
             </tr>
           ))}

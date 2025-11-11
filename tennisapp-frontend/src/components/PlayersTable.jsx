@@ -37,7 +37,6 @@ export default function PlayersTable() {
 
   return (
     <div>
-      <h2>Zoznam hráčov</h2>
       <table border="1" cellPadding="6">
         <thead>
           <tr>
@@ -54,7 +53,7 @@ export default function PlayersTable() {
               <td>{p.age}</td>
               <td>{p.type}</td>
               <td>
-                <button onClick={() => deletePlayer(p.name)}>Vymazať</button>
+                <button className="delete" onClick={() => deleteMatch(p.name)}>Vymazať</button>
               </td>
             </tr>
           ))}

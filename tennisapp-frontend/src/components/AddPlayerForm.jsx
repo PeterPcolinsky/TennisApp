@@ -27,7 +27,6 @@ export default function AddPlayerForm({ onPlayerAdded }) {
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 10, maxWidth: 320 }}>
-      <h2>Pridať hráča</h2>
       {error && <div style={{ color: 'red' }}>Chyba: {error}</div>}
       <label>
         Meno:
