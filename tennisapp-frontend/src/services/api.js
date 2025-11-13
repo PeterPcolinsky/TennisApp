@@ -1,5 +1,29 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
 
+function btoaUtf8(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+let authUser = null;
+let authPass = null;
+
+// 🔐 Nastavenie Basic Auth z frontendu
+export function setAuth(username, password) {
+  authUser = username;
+  authPass = password;
+}
+
+function buildHeaders(extra = {}) {
+  const headers = { ...extra };
+
+  if (authUser && authPass) {
+    const encoded = btoaUtf8(`${authUser}:${authPass}`);
+    headers["Authorization"] = `Basic ${encoded}`;
+  }
+
+  return headers;
+}
+
 async function handle(res) {
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -24,7 +48,7 @@ export const api = {
     return handle(
       await fetch(`${BASE_URL}/api/players`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: buildHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(player),
       })
     );
@@ -34,6 +58,7 @@ export const api = {
     return handle(
       await fetch(`${BASE_URL}/api/players/${encodeURIComponent(name)}`, {
         method: "DELETE",
+        headers: buildHeaders(),
       })
     );
   },
@@ -43,11 +68,12 @@ export const api = {
     return handle(await fetch(`${BASE_URL}/api/stats/leaderboard`));
   },
 
-  // --- Player stats (optional) ---
+  // --- Player stats ---
   async playerStats({ name, from, to }) {
     const params = new URLSearchParams({ name });
     if (from) params.append("from", from);
     if (to) params.append("to", to);
+
     return handle(
       await fetch(`${BASE_URL}/api/stats/player?${params.toString()}`)
     );
@@ -62,6 +88,7 @@ export const api = {
     return handle(
       await fetch(`${BASE_URL}/api/matches/${id}`, {
         method: "DELETE",
+        headers: buildHeaders(),
       })
     );
   },
@@ -70,7 +97,7 @@ export const api = {
     return handle(
       await fetch(`${BASE_URL}/api/matches`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: buildHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(match),
       })
     );

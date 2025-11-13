@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import sk.peter.tenis.annotations.TestWithoutSecurity;
 import sk.peter.tenis.dto.PlayerDto;
 import sk.peter.tenis.model.Player;
 import sk.peter.tenis.model.PlayerType;
@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = PlayerController.class)
+@TestWithoutSecurity
 class PlayerControllerTest {
 
     @Autowired

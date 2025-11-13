@@ -7,12 +7,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import sk.peter.tenis.annotations.TestWithoutSecurity;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestWithoutSecurity
 @ActiveProfiles("h2")
 // 💡 bez @ActiveProfiles – beží v "default" → CSV logika
 class MatchControllerCsvTest {

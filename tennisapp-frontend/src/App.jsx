@@ -4,6 +4,7 @@ import PlayersTable from "./components/PlayersTable";
 import LeaderboardTable from "./components/LeaderboardTable";
 import MatchesTable from "./components/MatchesTable";
 import AddMatchForm from "./components/AddMatchForm";
+import LoginForm from "./components/LoginForm";
 
 export default function App() {
   const [refreshPlayersKey, setRefreshPlayersKey] = useState(0);
@@ -26,6 +27,7 @@ export default function App() {
       </header>
 
       <h1 style={{ marginBottom: 30 }}>TennisMate 🎾</h1>
+      <LoginForm onLogin={(user) => console.log("Prihlásený:", user)} />
 
       {/* --- Pridanie hráča --- */}
       <section>
