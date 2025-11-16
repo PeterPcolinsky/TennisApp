@@ -31,11 +31,91 @@ public class MatchService {
     }
 
     /**
+     * Spoločná biznis validácia zápasu – používa sa v CSV aj JPA režime.
+     */
+    public void validateMatchBusinessRules(MatchDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Zápas nesmie byť prázdny.");
+        }
+
+        String aName = dto.getPlayerA() != null ? dto.getPlayerA().trim() : "";
+        String bName = dto.getPlayerB() != null ? dto.getPlayerB().trim() : "";
+
+        if (aName.isEmpty() || bName.isEmpty()) {
+            throw new IllegalArgumentException("Meno hráča A aj B je povinné.");
+        }
+
+        if (aName.equalsIgnoreCase(bName)) {
+            throw new IllegalArgumentException("Hráč A a hráč B musia byť rozdielni.");
+        }
+
+        validateScore(dto.getScore());
+    }
+
+    /**
+     * Validácia skóre – základné tenisové pravidlá pre jednotlivé sety.
+     */
+    private void validateScore(String rawScore) {
+        if (rawScore == null) {
+            throw new IllegalArgumentException("Skóre je povinné.");
+        }
+
+        String score = rawScore.trim();
+        if (score.isEmpty()) {
+            throw new IllegalArgumentException("Skóre je povinné.");
+        }
+
+        String[] sets = score.split(",");
+        for (String part : sets) {
+            String s = part.trim();
+            String[] games = s.split(":");
+            if (games.length != 2) {
+                throw new IllegalArgumentException("Neplatný formát skóre. Použi napr. \"6:4\" alebo \"6:4, 7:6\".");
+            }
+
+            int gA;
+            int gB;
+            try {
+                gA = Integer.parseInt(games[0].trim());
+                gB = Integer.parseInt(games[1].trim());
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("Skóre musí obsahovať len čísla (napr. \"6:4\").");
+            }
+
+            if (gA == gB) {
+                throw new IllegalArgumentException("Set nemôže skončiť remízou (napr. 6:6).");
+            }
+
+            int max = Math.max(gA, gB);
+            int min = Math.min(gA, gB);
+
+            if (max < 6) {
+                throw new IllegalArgumentException("Víťaz setu musí mať aspoň 6 gemov.");
+            }
+
+            if (max == 6 && max - min < 2) {
+                throw new IllegalArgumentException("Pri 6 gemoch musí byť rozdiel aspoň 2 (napr. 6:4).");
+            }
+
+            if (max == 7 && min < 5) {
+                throw new IllegalArgumentException("Set 7:x je možný len ako 7:5 alebo 7:6.");
+            }
+
+            if (max > 7) {
+                throw new IllegalArgumentException("Počet gemov v sete je príliš vysoký.");
+            }
+        }
+    }
+
+    /**
      * Vytvorí zápas z DTO, skontroluje existenciu hráčov podľa mena
      * (case-insensitive) a uloží do CSV cez CsvService.saveMatches(..).
      * Duplicitám sa snažíme zabrániť rovnakou logikou ako v CsvService.
      */
     public Match createFromDto(MatchDto dto) {
+        // 🔥 spoločná biznis validácia
+        validateMatchBusinessRules(dto);
+
         List<Player> players = new ArrayList<>();
         List<Match> matches = new ArrayList<>();
 

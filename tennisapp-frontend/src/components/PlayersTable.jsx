@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
-import { api } from '../services/api';
+import { api, clearAuthImmediately } from '../services/api';
 
 export default function PlayersTable() {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // zisťujeme rolu
+  const username = sessionStorage.getItem("username");
+  const isAdmin = username === "admin";
 
   async function refresh() {
     try {
@@ -22,10 +26,18 @@ export default function PlayersTable() {
   }, []);
 
   async function deletePlayer(name) {
+
+    // dvojitá ochrana
+    if (!isAdmin) {
+      alert("Nemáš oprávnenie zmazať hráča.");
+      return;
+    }
+
     if (!window.confirm(`Naozaj chceš vymazať hráča "${name}"?`)) return;
+
     try {
       await api.deletePlayer(name);
-      await refresh(); // znovu načítaj zoznam po zmazaní
+      await refresh();
     } catch (err) {
       alert(`Chyba pri mazaní: ${err.message}`);
     }
@@ -53,7 +65,11 @@ export default function PlayersTable() {
               <td>{p.age}</td>
               <td>{p.type}</td>
               <td>
-                <button className="delete" onClick={() => deletePlayer(p.name)}>Vymazať</button>
+                {isAdmin && (
+                  <button className="delete" onClick={() => deletePlayer(p.name)}>
+                    Vymazať
+                  </button>
+                )}
               </td>
             </tr>
           ))}

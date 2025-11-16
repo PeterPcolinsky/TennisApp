@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { api } from '../services/api';
 
+// Len písmená + medzery, aj s diakritikou
+const nameRegex = /^[A-Za-zÀ-ž]+(?: [A-Za-zÀ-ž]+)*$/;
+
 export default function AddPlayerForm({ onPlayerAdded }) {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
@@ -11,15 +14,40 @@ export default function AddPlayerForm({ onPlayerAdded }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+
+    const trimmedName = name.trim();
+    const ageNum = Number(age);
+
+    // 🔥 VALIDÁCIA MENA
+    if (!trimmedName) {
+      setError("❌ Zadaj meno hráča.");
+      return;
+    }
+
+    if (!nameRegex.test(trimmedName)) {
+      setError("❌ Meno môže obsahovať len písmená a medzery (bez číslic a špeciálnych znakov).");
+      return;
+    }
+
+    // 🔥 VALIDÁCIA VEKU
+    if (!Number.isInteger(ageNum) || ageNum < 5 || ageNum > 100) {
+      setError("❌ Zadaj reálny vek hráča (5 až 100 rokov).");
+      return;
+    }
+
     setLoading(true);
+
     try {
-      await api.addPlayer({ name: name.trim(), age: Number(age), type });
+      await api.addPlayer({ name: trimmedName, age: ageNum, type });
+
+      // reset
       setName('');
       setAge('');
       setType('PROFESIONAL');
-      onPlayerAdded?.(); // po úspechu obnovíme tabuľku
+
+      onPlayerAdded?.();
     } catch (err) {
-      setError(err.message);
+      setError("❌ " + err.message);
     } finally {
       setLoading(false);
     }
@@ -27,14 +55,16 @@ export default function AddPlayerForm({ onPlayerAdded }) {
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 10, maxWidth: 320 }}>
-      {error && <div style={{ color: 'red' }}>Chyba: {error}</div>}
+      {error && <div style={{ color: 'red', fontWeight: 'bold' }}>{error}</div>}
+
       <label>
         Meno:
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          required
           disabled={loading}
+          placeholder="Napr. Roger Federer"
+          required
         />
       </label>
 
@@ -44,8 +74,9 @@ export default function AddPlayerForm({ onPlayerAdded }) {
           type="number"
           value={age}
           onChange={(e) => setAge(e.target.value)}
-          required
           disabled={loading}
+          placeholder="Vek hráča"
+          required
         />
       </label>
 

@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { setAuth } from "../services/api";
+import { setAuth, clearAuthImmediately } from "../services/api";
 
 export default function LoginForm({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     if (!username || !password) {
@@ -14,42 +14,62 @@ export default function LoginForm({ onLogin }) {
       return;
     }
 
-    // 🔐 nastav Basic Auth pre všetky ďalšie API volania
-    setAuth(username, password);
-    setMessage(`Prihlásený ako: ${username}`);
-    onLogin?.(username);
+    try {
+      const encoded = btoa(`${username}:${password}`);
+
+      // 🔥 PRIAMY request na backend origin (nutné)
+      const res = await fetch("http://localhost:8081/api/health", {
+        method: "GET",
+        headers: {
+          "Authorization": `Basic ${encoded}`,
+          "X-Requested-With": "XMLHttpRequest" // 🔥 blokuje browser popup pri 401
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error("Unauthorized");
+      }
+
+      // 🔥 úspech – uložiť session
+      sessionStorage.setItem("username", username);
+      sessionStorage.setItem("password", password);
+
+      // 🔥 uložiť auth pre všetky ďalšie fetch requesty
+      setAuth(username, password);
+
+      setMessage("Prihlásenie úspešné ✔");
+
+      onLogin(username);
+
+    } catch (err) {
+      // ❗ nutné úplné odhlásenie pri neúspechu
+      clearAuthImmediately();
+      sessionStorage.removeItem("username");
+      sessionStorage.removeItem("password");
+
+      setMessage("❌ Nesprávne meno alebo heslo.");
+    }
   };
 
   return (
-    <div style={{ marginBottom: 20, background: "#222", padding: 15, borderRadius: 8 }}>
-      <h3>🔐 Prihlásenie</h3>
-
-      <form onSubmit={handleLogin} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+    <div style={{ marginBottom: 20 }}>
+      <form onSubmit={handleLogin} style={{ display: "flex", gap: 8 }}>
         <input
           type="text"
-          placeholder="Meno (admin / user)"
+          placeholder="Meno"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          style={{ padding: 8 }}
         />
         <input
           type="password"
           placeholder="Heslo"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          style={{ padding: 8 }}
         />
-
-        <button type="submit" style={{ padding: "8px 12px" }}>
-          Prihlásiť
-        </button>
+        <button type="submit">Prihlásiť</button>
       </form>
 
       {message && <p style={{ marginTop: 10 }}>{message}</p>}
-
-      <p style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
-        * GET požiadavky sú verejné, ale na POST/PUT/DELETE potrebuješ prihlásenie.
-      </p>
     </div>
   );
 }

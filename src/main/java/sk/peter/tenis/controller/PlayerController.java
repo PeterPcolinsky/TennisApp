@@ -1,5 +1,6 @@
 package sk.peter.tenis.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +59,7 @@ public class PlayerController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> createPlayer(@RequestBody PlayerDto playerDto) {
+    public ResponseEntity<Object> createPlayer(@RequestBody @Valid PlayerDto playerDto) {
         Object savedPlayer;
 
         if (isJpaActive()) {
@@ -74,7 +75,7 @@ public class PlayerController {
 
             // vytvor model Player
             sk.peter.tenis.model.Player player = new sk.peter.tenis.model.Player(
-                    playerDto.getName(),
+                    playerDto.getName().trim(),
                     playerDto.getAge(),
                     type
             );

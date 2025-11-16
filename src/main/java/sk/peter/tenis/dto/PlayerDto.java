@@ -5,6 +5,10 @@ import jakarta.validation.constraints.*;
 public class PlayerDto {
     @NotBlank(message = "Meno je povinné")
     @Size(max = 50, message = "Meno môže mať max 50 znakov")
+    @Pattern(
+            regexp = "^[A-Za-zÀ-ž]+(?: [A-Za-zÀ-ž]+)*$",
+            message = "Meno môže obsahovať len písmená a medzery (bez číslic a špeciálnych znakov)"
+    )
     private String name;
 
     @Min(value = 5, message = "Vek musí byť aspoň 5")

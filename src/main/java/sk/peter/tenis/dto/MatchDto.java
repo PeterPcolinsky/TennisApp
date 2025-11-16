@@ -18,6 +18,10 @@ public class MatchDto {
     private String playerB;
 
     @NotBlank(message = "Skóre je povinné (napr. \"6:4, 3:6, 7:5\")")
+    @Pattern(
+            regexp = "\\d{1,2}:\\d{1,2}(,\\s*\\d{1,2}:\\d{1,2})*",
+            message = "Skóre musí byť vo formáte napr. \"6:4\" alebo \"6:4, 7:6\""
+    )
     private String score;
 
     @NotBlank(message = "Dátum je povinný")

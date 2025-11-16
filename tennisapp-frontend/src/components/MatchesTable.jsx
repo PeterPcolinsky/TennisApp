@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 
-export default function MatchesTable() {
+export default function MatchesTable({ canDelete, onMatchesChanged }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -10,7 +10,6 @@ export default function MatchesTable() {
     const fetchMatches = async () => {
       try {
         const data = await api.getMatches();
-        console.log("🎾 FETCHED MATCHES:", data);
         setMatches(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
@@ -19,13 +18,14 @@ export default function MatchesTable() {
       }
     };
     fetchMatches();
-  }, []); // React to refresh key in App.jsx (key triggers re-mount)
+  }, []);
 
   const deleteMatch = async (id) => {
     if (!window.confirm("Naozaj chceš zmazať tento zápas?")) return;
     try {
       await api.deleteMatch(id);
       setMatches((prev) => prev.filter((m) => m.id !== id));
+      if (onMatchesChanged) onMatchesChanged(); // 🔁 refresh leaderboardu + prípadne ďalšie
     } catch (err) {
       alert("Chyba pri mazaní: " + err.message);
     }
@@ -45,7 +45,7 @@ export default function MatchesTable() {
             <th>Hráč B</th>
             <th>Výsledok</th>
             <th>Dátum</th>
-            <th>Akcia</th>
+            {canDelete && <th>Akcia</th>}
           </tr>
         </thead>
         <tbody>
@@ -56,11 +56,13 @@ export default function MatchesTable() {
               <td>{m.playerBName}</td>
               <td>{m.score}</td>
               <td>{m.date}</td>
-              <td>
-                <button className="delete" onClick={() => deleteMatch(m.id)}>
-                  Vymazať
-                </button>
-              </td>
+              {canDelete && (
+                <td>
+                  <button className="delete" onClick={() => deleteMatch(m.id)}>
+                    Vymazať
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

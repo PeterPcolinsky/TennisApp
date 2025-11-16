@@ -1,9 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
 
-function btoaUtf8(str) {
-  return btoa(unescape(encodeURIComponent(str)));
-}
-
 let authUser = null;
 let authPass = null;
 
@@ -13,11 +9,30 @@ export function setAuth(username, password) {
   authPass = password;
 }
 
+// 🔐 Okamžité vymazanie Basic Auth pri odhlásení
+export function clearAuthImmediately() {
+  authUser = null;
+  authPass = null;
+}
+
+export async function forceBrowserLogout() {
+  try {
+    await fetch("http://localhost:8081/api/health", {
+      headers: {
+        "Authorization": "Basic " + btoa("logout:logout")
+      }
+    });
+  } catch (_) {}
+}
+
 function buildHeaders(extra = {}) {
   const headers = { ...extra };
 
-  if (authUser && authPass) {
-    const encoded = btoaUtf8(`${authUser}:${authPass}`);
+  const user = sessionStorage.getItem("username");
+  const pass = sessionStorage.getItem("password");
+
+  if (user && pass) {
+    const encoded = btoa(`${user}:${pass}`);
     headers["Authorization"] = `Basic ${encoded}`;
   }
 
@@ -26,9 +41,17 @@ function buildHeaders(extra = {}) {
 
 async function handle(res) {
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Nie si prihlásený.");
+    }
+    if (res.status === 403) {
+      throw new Error("Nemáš oprávnenie vykonať túto akciu.");
+    }
+
     const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status} – ${text || res.statusText}`);
+    throw new Error(`Chyba: ${text || res.statusText}`);
   }
+
   const contentType = res.headers.get("content-type") || "";
   return contentType.includes("application/json") ? res.json() : res.text();
 }
@@ -101,5 +124,14 @@ export const api = {
         body: JSON.stringify(match),
       })
     );
+  },
+
+  // 🔐 Logout – + čistenie BasicAuth tokenov
+  logout() {
+    authUser = null;
+    authPass = null;
+
+    sessionStorage.removeItem("username");
+    sessionStorage.removeItem("password");
   },
 };

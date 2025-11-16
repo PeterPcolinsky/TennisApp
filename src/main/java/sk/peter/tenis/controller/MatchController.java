@@ -70,6 +70,9 @@ public class MatchController {
     @PostMapping
     public ResponseEntity<?> createMatch(@RequestBody @Valid MatchDto matchDto) {
         if (isJpaActive()) {
+            // 🔥 spoločná biznis validácia (mena, skóre)
+            csvService.validateMatchBusinessRules(matchDto);
+
             Player playerA = new Player(matchDto.getPlayerA(), 0, null);
             Player playerB = new Player(matchDto.getPlayerB(), 0, null);
             Match match = new Match(playerA, playerB, matchDto.getScore(), LocalDate.parse(matchDto.getDate()));
