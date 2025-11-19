@@ -23,6 +23,8 @@ public class PlayerService {
     }
 
     public Player createFromDto(PlayerDto dto) {
+        String name = dto.getName().trim();
+
         // 1) namapuj typ – skús najprv tvoju utilitu, potom názov enumu
         PlayerType type = PlayerType.fromInput(dto.getType());
         if (type == null) {
@@ -33,16 +35,33 @@ public class PlayerService {
             }
         }
 
-        // 2) vytvor Player cez KONŠTRUKTOR (tvoj poriadok je name, age, type)
-        Player p = new Player(dto.getName().trim(), dto.getAge(), type);
-
-        // 3) načítaj, pridaj, ulož
+        // 2) načítaj existujúcich hráčov
         List<Player> players = new ArrayList<>();
         try {
             CsvService.loadPlayers(players);
-            players.add(p);
+        } catch (Exception e) {
+            // ak sa nepodarí načítať, pokračujeme s prázdnym zoznamom
+        }
+
+        // 3) kontrola duplicitného mena (case-insensitive, celé meno)
+        boolean exists = players.stream()
+                .anyMatch(p -> p.getName().equalsIgnoreCase(name));
+
+        if (exists) {
+            throw new IllegalArgumentException(
+                    "Hráč s týmto menom už existuje. Zadaj prosím celé meno (meno + priezvisko), aby sme ich vedeli odlíšiť."
+            );
+        }
+
+        // 4) vytvor Player cez KONŠTRUKTOR (tvoj poriadok je name, age, type)
+        Player p = new Player(name, dto.getAge(), type);
+
+        // 5) pridaj a ulož
+        players.add(p);
+        try {
             CsvService.savePlayers(players);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // CSV režim – ak sa nepodarí uložiť, nezhodíme API
         }
         return p;
     }

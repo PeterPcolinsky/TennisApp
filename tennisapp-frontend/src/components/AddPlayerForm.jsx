@@ -46,8 +46,18 @@ export default function AddPlayerForm({ onPlayerAdded }) {
       setType('PROFESIONAL');
 
       onPlayerAdded?.();
+
     } catch (err) {
+
+      // 🔥 DEBUG — TOTO POTREBUJEME VIDIEŤ
+      console.log("🔥 err:", err);
+      console.log("🔥 err.message:", err.message);
+      console.log("🔥 err.response:", err.response);
+      console.log("🔥 err.toString():", err.toString());
+
+      // Dočasne zobrazíme priamo message
       setError("❌ " + err.message);
+
     } finally {
       setLoading(false);
     }

@@ -24,22 +24,20 @@ public class PlayerJpaService {
 
     // ---------------- SAVE ----------------
     public void save(Player player) {
-        Optional<PlayerEntity> existing = playerRepository.findByNameIgnoreCase(player.getName());
-
-        if (existing.isPresent()) {
-            PlayerEntity entity = existing.get();
-            entity.setAge(player.getAge());
-            entity.setType(player.getType());
-            playerRepository.save(entity);
-            System.out.println("🔁 Aktualizovaný hráč: " + player.getName());
-        } else {
-            PlayerEntity newEntity = new PlayerEntity();
-            newEntity.setName(player.getName());
-            newEntity.setAge(player.getAge());
-            newEntity.setType(player.getType());
-            playerRepository.save(newEntity);
-            System.out.println("➕ Pridaný nový hráč: " + player.getName());
+        // kontrola duplicitného mena (case-insensitive, celé meno)
+        boolean exists = playerRepository.existsByNameIgnoreCase(player.getName());
+        if (exists) {
+            throw new IllegalArgumentException(
+                    "Hráč s týmto menom už existuje. Zadaj prosím celé meno (meno + priezvisko), aby sme ich vedeli odlíšiť."
+            );
         }
+
+        PlayerEntity newEntity = new PlayerEntity();
+        newEntity.setName(player.getName());
+        newEntity.setAge(player.getAge());
+        newEntity.setType(player.getType());
+        playerRepository.save(newEntity);
+        System.out.println("➕ Pridaný nový hráč: " + player.getName());
     }
 
     public Player update(String name, PlayerDto dto) {

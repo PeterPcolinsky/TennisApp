@@ -39,25 +39,45 @@ function buildHeaders(extra = {}) {
   return headers;
 }
 
+//  ERROR HANDLER
 async function handle(res) {
   if (!res.ok) {
-    if (res.status === 401) {
-      throw new Error("Nie si prihlásený.");
-    }
-    if (res.status === 403) {
-      throw new Error("Nemáš oprávnenie vykonať túto akciu.");
+
+    // 401 a 403
+    if (res.status === 401) throw new Error("Nie si prihlásený.");
+    if (res.status === 403) throw new Error("Nemáš oprávnenie vykonať túto akciu.");
+
+    // zistíme typ odpovede
+    const contentType = res.headers.get("content-type") || "";
+
+    // 🔥 PRI CHYBE BACKEND POSIELA JSON
+    if (contentType.includes("application/json")) {
+      const data = await res.json().catch(() => null);
+
+      if (data && data.error) {
+        throw new Error(data.error);
+      }
+
+      throw new Error("Neznáma chyba (JSON bez erroru)");
     }
 
+    // 🔥 ak to nie je JSON → treat as text
     const text = await res.text().catch(() => "");
-    throw new Error(`Chyba: ${text || res.statusText}`);
+
+    if (text) {
+      throw new Error(text.trim());
+    }
+
+    throw new Error("Neznáma chyba");
   }
 
+  // success
   const contentType = res.headers.get("content-type") || "";
   return contentType.includes("application/json") ? res.json() : res.text();
 }
 
 export const api = {
-  // --- Health endpoint ---
+  // --- Health ---
   async health() {
     return handle(await fetch(`${BASE_URL}/api/health`));
   },
@@ -91,7 +111,7 @@ export const api = {
     return handle(await fetch(`${BASE_URL}/api/stats/leaderboard`));
   },
 
-  // --- Player stats ---
+  // --- Player Stats ---
   async playerStats({ name, from, to }) {
     const params = new URLSearchParams({ name });
     if (from) params.append("from", from);
@@ -126,12 +146,11 @@ export const api = {
     );
   },
 
-  // 🔐 Logout – + čistenie BasicAuth tokenov
+  // --- Logout ---
   logout() {
     authUser = null;
     authPass = null;
-
     sessionStorage.removeItem("username");
     sessionStorage.removeItem("password");
-  },
+  }
 };
