@@ -4,6 +4,10 @@ import './index.css'
 import './App.css';
 import App from './App.jsx'
 
+// 🔥 Auto-logout pri spustení aplikácie
+sessionStorage.removeItem("username");
+sessionStorage.removeItem("password");
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

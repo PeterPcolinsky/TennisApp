@@ -12,11 +12,16 @@ export default function App() {
   const [refreshMatchesKey, setRefreshMatchesKey] = useState(0);
   const [refreshLeaderboardKey, setRefreshLeaderboardKey] = useState(0);
 
+  // 🔥 Stav prihláseného používateľa – číta sa zo sessionStorage len na začiatku
+  const [loggedUsername, setLoggedUsername] = useState(
+    sessionStorage.getItem("username") || null
+  );
+
   const refreshPlayers = () => setRefreshPlayersKey((k) => k + 1);
   const refreshMatches = () => setRefreshMatchesKey((k) => k + 1);
   const refreshLeaderboard = () => setRefreshLeaderboardKey((k) => k + 1);
 
-  const username = sessionStorage.getItem("username");
+  const username = loggedUsername;
   const isLogged = !!username;
   const isAdmin = username === "admin";
 
@@ -24,6 +29,11 @@ export default function App() {
   const handleMatchesChanged = () => {
     refreshMatches();
     refreshLeaderboard();
+  };
+
+  const handleLogout = () => {
+    api.logout();               // vyčistí sessionStorage + interný stav
+    setLoggedUsername(null);    // odhlásime aj v Reacte
   };
 
   return (
@@ -51,7 +61,8 @@ export default function App() {
         }}
       >
         {!isLogged ? (
-          <LoginForm onLogin={() => window.location.reload()} />
+          // 🔥 ŽIADNY reload – len nastavíme stav prihlásenia
+          <LoginForm onLogin={(username) => setLoggedUsername(username)} />
         ) : (
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <span>
@@ -59,10 +70,7 @@ export default function App() {
             </span>
 
             <button
-              onClick={() => {
-                api.logout();
-                window.location.reload();
-              }}
+              onClick={handleLogout}
               style={{ padding: "6px 12px" }}
             >
               Odhlásiť

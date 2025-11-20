@@ -15,16 +15,6 @@ export function clearAuthImmediately() {
   authPass = null;
 }
 
-export async function forceBrowserLogout() {
-  try {
-    await fetch("http://localhost:8081/api/health", {
-      headers: {
-        "Authorization": "Basic " + btoa("logout:logout")
-      }
-    });
-  } catch (_) {}
-}
-
 function buildHeaders(extra = {}) {
   const headers = { ...extra };
 
