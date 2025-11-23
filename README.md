@@ -1,118 +1,182 @@
-# 🎾 Tenisová aplikácia – REST API (Spring Boot)
+# 🎾 TennisMate – Fullstack tenisová aplikácia (Spring Boot + MySQL + React)
 
-Projekt vytvorený v Jave (Spring Boot), ktorý spracováva údaje o tenistoch a zápasoch cez REST API.
-Podporuje **CSV** aj **MySQL (JPA)** režim a umožňuje CRUD operácie pre hráčov a zápasy.
+TennisMate je kompletná **fullstack aplikácia**, ktorá kombinuje:
+- **Spring Boot (REST API)**
+- **MySQL databázu**
+- **JPA / Hibernate**
+- **React (Vite) frontend**
+- **Security (Basic Auth: ADMIN / USER)**
+- **CSV fallback režim**
+- **Validácie, štatistiky, leaderboard, zápasy, hráči**
 
----
-
-## 🚀 Aktuálny stav projektu
-
-✅ REST API plne funkčné  
-✅ CRUD operácie pre hráčov aj zápasy  
-✅ Štatistiky (výhry, prehry, percentá úspešnosti)  
-✅ Postman testy úspešne prebehnuté  
-✅ MySQL migrácia hotová (JPA integrácia)  
-🔜 Fáza 8 – JUnit testy a refaktor
+Projekt slúži ako ukážka reálneho riešenia pre HR a developerov.
 
 ---
 
-## 🧩 Fázy vývoja
-
-| Fáza | Názov | Stav |
-|------|--------|------|
-| 1 | CSV načítanie a ukladanie | ✅ Hotovo |
-| 2 | REST API pre hráčov a zápasy | ✅ Hotovo |
-| 3 | Štatistiky hráčov | ✅ Hotovo |
-| 4 | DTO a validácie | ✅ Hotovo |
-| 5 | Exception handling | ✅ Hotovo |
-| 6 | JPA integrácia (H2 databáza) | ✅ Hotovo |
-| 7 | MySQL migrácia (JPA integrácia + DataSeeder) | ✅ Hotovo |
-| 8 | JUnit testy a refaktor | 🔜 Nasleduje |
-| 9 | React frontend (Leaderboard UI) | 🔜 Budúce rozšírenie |
+## 🚀 Hlavné funkcionality
+- Login systém (ADMIN / USER)
+- CRUD operácie pre hráčov
+- Pridávanie/mazanie zápasov
+- Výpočet štatistík (wins, losses, winrate)
+- Live leaderboard podľa zápasov
+- Validácie na backende aj fronte
+- Ochrana pred duplicitou hráčov podľa mena
+- MySQL perzistencia + automatický import CSV do DB
+- Autentifikácia cez BasicAuth (bez browser popup okna)
+- React frontend napojený na REST API
 
 ---
 
-## 🗂️ Štruktúra projektu
+## 📦 Projektová štruktúra
+### Backend (Spring Boot)
+```
+src/main/java/sk/peter/tenis/
+│── config/CorsConfig, DataSeeder, MatchesSeeder, SecurityConfig.java
+│── controller/HealthController, MatchController, PlayerController, StatsController
+│── dto/LeaderboardDto, MatchDto,MatchResponseDto,MatchUpdateDto,PlayerDto,PlayerStatsDto
+│── entity/MatchEntity, PlayerEntity
+│── exception/ApiExpectationHandler, NotFoundException
+│── model/Match, Player, PlayerType
+│── repository/MatchRepository, PlayerRepository
+│── service/CsvService, MatchService, PlayerService, StatsService
+│── service/jpa/MatchJpaService, PlayerJpaService, StatsJpaService
+│── ui/ConsoleApp
+│── util/Printer
+│── App.java
+│── DataSeeder.java
+│── TenisApiApplication.java
+src/main/resources
+│── static/assets, index.html, vite.svg
+│── application.properties
+│── application-h2.properties
+│── aplication-mysql.properties
+src/test/java/_archive
+│── MatchControllerTest
+src/test/java/sk/peter/tenis
+│── annotations/TestWithoutSecurity
+│── config/TestSecurityConfig
+│── controller/MatchControllerCsvTest, PlayerControllerTest, StatsCOntrollerTest
+│── Service/MatchJpaServiceTest, PlayerJpaServiceTest, StatsJpaServiceTest
+```
 
+### Frontend (React + Vite)
 ```
 src/
- ├─ main/
- │   ├─ java/sk/peter/tenis/
- │   │   ├─ controller/
- │   │   ├─ dto/
- │   │   ├─ entity/
- │   │   ├─ exception/
- │   │   ├─ model/
- │   │   ├─ repository/
- │   │   ├─ service/
- │   │   │   ├─ jpa/
- │   │   │   └─ CsvService.java
- │   │   ├─ DataSeeder.java         ← NEW (import CSV → MySQL pri štarte)
- │   │   └─ TenisApiApplication.java
- │   └─ resources/
- │       ├─ application.properties
- │       ├─ application-h2.properties
- │       └─ application-mysql.properties   ← NEW (MySQL konfigurácia)
- ├─ test/
- │   ├─ PlayerControllerTest.java
- │   ├─ MatchControllerTest.java
- │   └─ StatsControllerTest.java
- └─ data/
-     ├─ players.csv
-     └─ matches.csv
+│── assets/react.svg
+│── components/AddMatchForm,jsx, AddPlayerForm.jsx, LeaderboardTable.jsx, LoginForm,jsx, MatchesTable.jsx, PlayersTable.jsx
+│── services/api.js
+│── App.css
+│── App.jsx
+│── index.css
+│── main.jsx
 ```
 
 ---
 
-## ⚙️ MySQL profil
+## 🛑 Bezpečnosť & Autentifikácia
+- ADMIN: `admin / admin911!`
+- USER: `user / user`
+- ADMIN môže:
+  - pridávať hráčov
+  - mazať hráčov
+  - pridávať zápasy
+  - mazať zápasy
+- USER vidí len verejné údaje
 
-Aplikácia sa spúšťa s profilom `mysql`, ktorý využíva skutočnú databázu namiesto H2.
+Security vrstva rieši:
+- odstránenie browser BasicAuth popupu
+- custom 401 handler
+- chránené `/api/**` endpointy
 
-### Nastavenie (application-mysql.properties)
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/tennisapp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+---
+
+## 🗄️ MySQL – konfigurácia
+Použitý profil: **mysql**
+
+`application-mysql.properties`:
+```
+spring.datasource.url=jdbc:mysql://localhost:3306/tennisapp
 spring.datasource.username=root
 spring.datasource.password=root
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
-logging.level.org.hibernate.SQL=DEBUG
 ```
 
----
-
-## 🧠 Testovanie cez Postman
-
-Testované CRUD operácie:
-
-| Operácia | Endpoint | Výsledok |
-|-----------|-----------|----------|
-| GET | `/api/players` | Zobrazí všetkých hráčov |
-| POST | `/api/players` | Pridá nového hráča |
-| PUT | `/api/players/{name}` | Aktualizuje hráča |
-| DELETE | `/api/players/{name}` | Odstráni hráča |
-| GET | `/api/matches` | Zobrazí všetky zápasy |
-| POST | `/api/matches` | Pridá nový zápas |
-| PUT | `/api/matches/{id}` | Aktualizuje zápas podľa ID |
-| DELETE | `/api/matches/{id}` | Vymaže zápas podľa ID |
+### Automatický import CSV → MySQL  
+DataSeeder načíta CSV súbory a prepíše ich do MySQL pri prvom spustení.
 
 ---
 
-## 🧾 Databázová integrácia
-
-✅ Automatický import CSV → MySQL cez `DataSeeder` pri štarte aplikácie  
-✅ Reálne tabuľky `players` a `matches` v MySQL (phpMyAdmin)  
-✅ Transakcie cez Hibernate (JPA repository)  
-✅ Okamžitý sync s databázou (bez potreby GET obnovy)
-
----
-
-## 📅 Ďalší krok
-
-➡️ **Fáza 8 – JUnit testy a refaktor (PlayerControllerTest, MatchControllerTest, StatsControllerTest)**  
-➡️ následne **Fáza 9 – React frontend (Leaderboard UI)**
+## 🎯 Čo backend obsahuje
+- PlayerController / MatchController / StatsController
+- Validácie parameterov (DTO)
+- Ošetrenie chýb (ApiExceptionHandler)
+- PlayerJpaService & MatchJpaService
+- Ochrana proti duplicitným hráčom
 
 ---
 
-**Autor:** Peter Pčolinský  
-**GitHub:** [PeterPcolinsky](https://github.com/PeterPcolinsky)
+## 🎯 Čo frontend obsahuje
+- AddPlayerForm (validácie + error handling)
+- PlayersTable (mazanie hráčov)
+- AddMatchForm (pridanie zápasu)
+- MatchesTable (mazanie zápasov)
+- LeaderboardTable (výpočty)
+- LoginForm (BasicAuth bez reloadovania)
+- api.js (REST volania + error handler)
+
+---
+
+## 🔁 Posledné dôležité zmeny (z commitov)
+
+### ✔ Duplicate name validation  
+- Ochrana pred prepisom existujúceho hráča  
+- Čisté frontend chyby (❌ Hráč s týmto menom už existuje...)  
+
+### ✔ Kompletné JPA + MySQL prepojenie  
+- PlayerJpaService, MatchJpaService  
+- repositories  
+- DataSeeder automatický import  
+
+### ✔ Frontend autentifikácia  
+- odstránený page reload  
+- stabilné sessionStorage  
+- žiadne samovoľné odhlasovanie  
+
+### ✔ UI úpravy  
+- kompletný React frontend  
+- layout, komponenty, tabuľky, formuláre  
+
+---
+
+## 🧪 Testy (Phase 8)
+Súčasťou projektu je 8x JUnit testov:
+- PlayerJpaServiceTest  
+- MatchJpaServiceTest  
+- StatsJpaServiceTest  
+- PlayerControllerTest  
+- MatchControllerCsvTest  
+- StatsControllerTest  
+- TestSecurityConfig
+- TestWithoutSecurity
+
+Všetky testy prešli úspešne.
+
+---
+
+## 🌐 Deployment ako statická ukážka
+V `target/classes/static` sa automaticky vytvorí frontend (Vite build).  
+http://pcolinsky.sk/
+
+Na doménu je možné nahrať:
+- `index.html`
+- `assets/`
+- `vite.svg`
+
+Backend funkcie budú vypnuté (bez DB), ale UI bude viditeľné ako demo.
+
+---
+
+## 🧑‍💻 Autor
+**Peter Pčolinský — TennisMate**  
+Fullstack Java/React aplikácia pre registráciu hráčov a správu tenisových zápasov.
+

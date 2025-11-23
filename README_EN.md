@@ -1,116 +1,176 @@
-# 🎾 TennisApp – REST API (Spring Boot)
+# 🎾 TennisMate – Tennis Application (Spring Boot + MySQL + React)
 
-A complete Java (Spring Boot) application for managing tennis players and matches via REST API.  
-Supports both **CSV** and **MySQL (JPA)** modes, allowing full CRUD operations.
+TennisMate is a fullstack tennis management system combining:
+- **Spring Boot (REST API)**
+- **MySQL**
+- **JPA / Hibernate**
+- **React (Vite) frontend**
+- **Security (Basic Auth: ADMIN / USER)**
+- **CSV fallback mode**
+- **Validation, stats, leaderboard, matches, players**
 
----
-
-## 🚀 Current Status
-
-✅ Fully functional REST API  
-✅ CRUD operations for players and matches  
-✅ Player statistics (wins, losses, win rate)  
-✅ Postman tests passed  
-✅ MySQL migration (Phase 7) completed  
-🔜 Phase 8 – Unit testing and refactor
+This project serves as a strong portfolio piece for HR and developers.
 
 ---
 
-## 🧩 Development Phases
-
-| Phase | Description | Status |
-|--------|--------------|--------|
-| 1 | CSV loading and saving | ✅ Done |
-| 2 | REST API for players and matches | ✅ Done |
-| 3 | Player statistics | ✅ Done |
-| 4 | DTO and validation | ✅ Done |
-| 5 | Exception handling | ✅ Done |
-| 6 | JPA integration (H2 DB) | ✅ Done |
-| 7 | MySQL migration (JPA + DataSeeder) | ✅ Done |
-| 8 | Unit tests & refactor | 🔜 Upcoming |
-| 9 | React frontend (Leaderboard UI) | 🔜 Future |
+## 🚀 Main Features
+- Login system (ADMIN / USER)
+- CRUD for players
+- CRUD for matches
+- Automatic leaderboard based on match results
+- Statistics (wins, losses, winrate)
+- Backend + frontend validation
+- Duplicate-name protection
+- MySQL persistence with automatic CSV import
+- Clean REST API with error handling
 
 ---
 
-## 🗂️ Project Structure
+## 📦 Project Structure
+### Backend (Spring Boot)
+```
+src/main/java/sk/peter/tenis/
+│── config/CorsConfig, DataSeeder, MatchesSeeder, SecurityConfig.java
+│── controller/HealthController, MatchController, PlayerController, StatsController
+│── dto/LeaderboardDto, MatchDto,MatchResponseDto,MatchUpdateDto,PlayerDto,PlayerStatsDto
+│── entity/MatchEntity, PlayerEntity
+│── exception/ApiExpectationHandler, NotFoundException
+│── model/Match, Player, PlayerType
+│── repository/MatchRepository, PlayerRepository
+│── service/CsvService, MatchService, PlayerService, StatsService
+│── service/jpa/MatchJpaService, PlayerJpaService, StatsJpaService
+│── ui/ConsoleApp
+│── util/Printer
+│── App.java
+│── DataSeeder.java
+│── TenisApiApplication.java
+src/main/resources
+│── static/assets, index.html, vite.svg
+│── application.properties
+│── application-h2.properties
+│── aplication-mysql.properties
+src/test/java/_archive
+│── MatchControllerTest
+src/test/java/sk/peter/tenis
+│── annotations/TestWithoutSecurity
+│── config/TestSecurityConfig
+│── controller/MatchControllerCsvTest, PlayerControllerTest, StatsCOntrollerTest
+│── Service/MatchJpaServiceTest, PlayerJpaServiceTest, StatsJpaServiceTest
+```
 
+### Frontend (React + Vite)
 ```
 src/
- ├─ main/
- │   ├─ java/sk/peter/tenis/
- │   │   ├─ controller/
- │   │   ├─ dto/
- │   │   ├─ entity/
- │   │   ├─ exception/
- │   │   ├─ model/
- │   │   ├─ repository/
- │   │   ├─ service/
- │   │   │   ├─ jpa/
- │   │   │   └─ CsvService.java
- │   │   ├─ DataSeeder.java         ← NEW (imports CSV → MySQL at startup)
- │   │   └─ TenisApiApplication.java
- │   └─ resources/
- │       ├─ application.properties
- │       ├─ application-h2.properties
- │       └─ application-mysql.properties   ← NEW (MySQL configuration)
- ├─ test/
- │   ├─ PlayerControllerTest.java
- │   ├─ MatchControllerTest.java
- │   └─ StatsControllerTest.java
- └─ data/
-     ├─ players.csv
-     └─ matches.csv
+│── assets/react.svg
+│── components/AddMatchForm,jsx, AddPlayerForm.jsx, LeaderboardTable.jsx, LoginForm,jsx, MatchesTable.jsx, PlayersTable.jsx
+│── services/api.js
+│── App.css
+│── App.jsx
+│── index.css
+│── main.jsx
 ```
 
 ---
 
-## ⚙️ MySQL Profile
+## 🛑 Security & Authentication
+- ADMIN: `admin / admin911!`
+- USER: `user / user`
+- ADMIN permissions:
+  - add players
+  - delete players
+  - add matches
+  - delete matches
 
-Run the app with the `mysql` profile to use a real MySQL database instead of H2.
+Security includes:
+- custom authentication entry point  
+- removed browser login popup  
+- protected `/api/**` endpoints  
 
-### Example (application-mysql.properties)
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/tennisapp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+---
+
+## 🗄️ MySQL Configuration
+Active profile: **mysql**
+
+```
+spring.datasource.url=jdbc:mysql://localhost:3306/tennisapp
 spring.datasource.username=root
 spring.datasource.password=root
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
-logging.level.org.hibernate.SQL=DEBUG
 ```
 
----
-
-## 🧠 Testing via Postman
-
-| Operation | Endpoint | Description |
-|------------|-----------|-------------|
-| GET | `/api/players` | Returns all players |
-| POST | `/api/players` | Adds a new player |
-| PUT | `/api/players/{name}` | Updates player info |
-| DELETE | `/api/players/{name}` | Deletes a player |
-| GET | `/api/matches` | Returns all matches |
-| POST | `/api/matches` | Adds a new match |
-| PUT | `/api/matches/{id}` | Updates match by ID |
-| DELETE | `/api/matches/{id}` | Deletes match by ID |
+### Automatic CSV → MySQL Import
+DataSeeder transfers CSV data into DB on first startup.
 
 ---
 
-## 🧾 Database Integration
-
-✅ Automatic CSV → MySQL import via `DataSeeder` at startup  
-✅ Real tables `players` and `matches` (phpMyAdmin verified)  
-✅ Full CRUD persistence through Hibernate JPA  
-✅ Instant DB sync – no manual refresh required
-
----
-
-## 📅 Next Step
-
-➡️ **Phase 8 – Unit testing and refactor (Player, Match, Stats controllers)**  
-➡️ **Phase 9 – React frontend (Leaderboard UI)**
+## 🎯 Backend Components
+- PlayerController / MatchController / StatsController
+- DTO validation
+- ApiExceptionHandler
+- PlayerJpaService + MatchJpaService
+- Duplicate player name protection
 
 ---
 
-**Author:** Peter Pčolinský  
-**GitHub:** [PeterPcolinsky](https://github.com/PeterPcolinsky)
+## 🎯 Frontend Components
+- LoginForm (BasicAuth without reload)
+- AddPlayerForm (validation + clean error messages)
+- PlayersTable (delete players)
+- AddMatchForm
+- MatchesTable (delete matches)
+- LeaderboardTable
+- api.js (REST service with error handler)
+
+---
+
+## 🔁 Key recent commits
+
+### ✔ Duplicate-name validation  
+Prevents overwriting existing players, returns clean JSON error.
+
+### ✔ Full MySQL & JPA integration  
+Repositories, entities, services, and automatic CSV import.
+
+### ✔ Frontend authentication improvements  
+Stable login state, removed unwanted logout.
+
+### ✔ UI improvements  
+Modern layout, forms, tables, styling.
+
+---
+
+## 🧪 Tests (Phase 8)
+Includes 8 JUnit test classes:
+- PlayerJpaServiceTest  
+- MatchJpaServiceTest  
+- StatsJpaServiceTest  
+- PlayerControllerTest  
+- MatchControllerCsvTest  
+- StatsControllerTest  
+- TestSecurityConfig
+- TestWithoutSecurity
+
+All tests pass successfully.
+
+---
+
+## 🌐 Deployment as static demo
+Vite build is automatically copied into:
+```
+target/classes/static
+```
+http://pcolinsky.sk/
+
+Upload to hosting:
+- `index.html`
+- `assets/`
+- `vite.svg`
+
+This creates a **static demo** without backend — perfect for portfolio.
+
+---
+
+## 🧑‍💻 Author
+**Peter Pčolinský – TennisMate**  
+Fullstack Java/React tennis management system.
+
