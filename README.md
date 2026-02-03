@@ -11,6 +11,27 @@ TennisMate je kompletná **fullstack aplikácia**, ktorá kombinuje:
 
 Projekt slúži ako ukážka reálneho riešenia pre HR a developerov.
 
+## 🚀 Rýchly štart (Lokálne spustenie)
+
+### Backend
+Požiadavky:
+- Java 21
+- Maven
+- MySQL (alebo H2 profil)
+
+Spustenie:
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+### Frontend
+```bash
+cd tennisapp-frontend
+npm install
+npm run dev
+```
+
 ---
 
 ## 🚀 Hlavné funkcionality
