@@ -11,6 +11,27 @@ TennisMate is a fullstack tennis management system combining:
 
 This project serves as a strong portfolio piece for HR and developers.
 
+## 🚀 Quickstart (Local)
+
+### Backend
+Requirements:
+- Java 21
+- Maven
+- MySQL (or H2 profile)
+
+Run:
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+### Frontend
+```bash
+cd tennisapp-frontend
+npm install
+npm run dev
+```
+
 ---
 
 ## 🚀 Main Features
@@ -25,6 +46,7 @@ This project serves as a strong portfolio piece for HR and developers.
 - Clean REST API with error handling
 
 ---
+
 
 ## 📦 Project Structure
 ### Backend (Spring Boot)
