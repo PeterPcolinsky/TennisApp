@@ -1,7 +1,7 @@
 package sk.peter.tenis.entity;
 
 import jakarta.persistence.*;
-import sk.peter.tenis.model.PlayerType; // vyuzivame enum
+import sk.peter.tenis.model.PlayerType;
 
 @Entity
 @Table(name = "players")

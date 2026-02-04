@@ -2,12 +2,11 @@ package sk.peter.tenis.service.jpa;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import sk.peter.tenis.dto.LeaderboardDto;
+import sk.peter.tenis.dto.PlayerStatsDto;
 import sk.peter.tenis.entity.MatchEntity;
-import sk.peter.tenis.entity.PlayerEntity;
 import sk.peter.tenis.repository.MatchRepository;
 import sk.peter.tenis.repository.PlayerRepository;
-import sk.peter.tenis.dto.PlayerStatsDto;
-import sk.peter.tenis.dto.LeaderboardDto;
 
 import java.time.LocalDate;
 import java.util.*;

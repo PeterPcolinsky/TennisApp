@@ -1,8 +1,8 @@
 package sk.peter.tenis.service;
 
+import sk.peter.tenis.model.Match;
 import sk.peter.tenis.model.Player;
 import sk.peter.tenis.model.PlayerType;
-import sk.peter.tenis.model.Match;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

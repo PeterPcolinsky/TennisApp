@@ -2,10 +2,10 @@ package sk.peter.tenis.service;
 
 import org.springframework.stereotype.Service;
 import sk.peter.tenis.dto.MatchDto;
-import sk.peter.tenis.model.Match;
-import sk.peter.tenis.model.Player;
 import sk.peter.tenis.dto.MatchUpdateDto;
 import sk.peter.tenis.exception.NotFoundException;
+import sk.peter.tenis.model.Match;
+import sk.peter.tenis.model.Player;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

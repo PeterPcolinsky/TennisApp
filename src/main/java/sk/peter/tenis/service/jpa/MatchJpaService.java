@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import sk.peter.tenis.dto.MatchUpdateDto;
 import sk.peter.tenis.entity.MatchEntity;
-import sk.peter.tenis.entity.PlayerEntity;
 import sk.peter.tenis.model.Match;
 import sk.peter.tenis.model.Player;
 import sk.peter.tenis.repository.MatchRepository;
@@ -13,7 +12,6 @@ import sk.peter.tenis.repository.PlayerRepository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Profile({"h2", "mysql"})

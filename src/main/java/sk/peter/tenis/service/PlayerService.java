@@ -2,9 +2,9 @@ package sk.peter.tenis.service;
 
 import org.springframework.stereotype.Service;
 import sk.peter.tenis.dto.PlayerDto;
+import sk.peter.tenis.exception.NotFoundException;
 import sk.peter.tenis.model.Player;
 import sk.peter.tenis.model.PlayerType;
-import sk.peter.tenis.exception.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;

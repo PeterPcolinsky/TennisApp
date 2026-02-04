@@ -1,16 +1,14 @@
 package sk.peter.tenis.ui;
 
-import sk.peter.tenis.model.Player;
-import sk.peter.tenis.service.StatsService;
-import sk.peter.tenis.util.Printer;
-import sk.peter.tenis.model.PlayerType;
 import sk.peter.tenis.model.Match;
+import sk.peter.tenis.model.Player;
+import sk.peter.tenis.model.PlayerType;
 import sk.peter.tenis.service.CsvService;
+import sk.peter.tenis.util.Printer;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.LocalDate;
-
 import java.util.Scanner;
 
 public class ConsoleApp {

@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sk.peter.tenis.dto.PlayerDto;
-import sk.peter.tenis.entity.PlayerEntity;
 import sk.peter.tenis.model.Player;
 import sk.peter.tenis.service.PlayerService;
 import sk.peter.tenis.service.jpa.PlayerJpaService;
