@@ -67,7 +67,8 @@ public class StatsService {
                     int gamesB = Integer.parseInt(games[1].trim());
                     if (gamesA > gamesB) setsA++;
                     else if (gamesB > gamesA) setsB++;
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
             }
 
             if (setsA == 0 && setsB == 0) continue;
@@ -142,7 +143,8 @@ public class StatsService {
                     int gamesB = Integer.parseInt(games[1].trim());
                     if (gamesA > gamesB) setsA++;
                     else if (gamesB > gamesA) setsB++;
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
             }
 
             if (setsA == 0 && setsB == 0) continue;
@@ -197,7 +199,8 @@ public class StatsService {
                         int gamesB = Integer.parseInt(games[1].trim());
                         if (gamesA > gamesB) setsA++;
                         else if (gamesB > gamesA) setsB++;
-                    } catch (NumberFormatException ignored) {}
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
 
                 if (setsA == 0 && setsB == 0) continue;

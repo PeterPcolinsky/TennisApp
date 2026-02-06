@@ -14,9 +14,19 @@ public class MatchUpdateDto {
     @Pattern(regexp = "^$|\\d{4}-\\d{2}-\\d{2}", message = "Dátum musí byť vo formáte YYYY-MM-DD")
     private String newDate;
 
-    public String getNewScore() { return newScore; }
-    public void setNewScore(String newScore) { this.newScore = newScore; }
+    public String getNewScore() {
+        return newScore;
+    }
 
-    public String getNewDate() { return newDate; }
-    public void setNewDate(String newDate) { this.newDate = newDate; }
+    public void setNewScore(String newScore) {
+        this.newScore = newScore;
+    }
+
+    public String getNewDate() {
+        return newDate;
+    }
+
+    public void setNewDate(String newDate) {
+        this.newDate = newDate;
+    }
 }

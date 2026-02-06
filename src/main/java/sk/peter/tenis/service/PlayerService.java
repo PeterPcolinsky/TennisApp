@@ -75,7 +75,8 @@ public class PlayerService {
             int idx = -1;
             for (int i = 0; i < players.size(); i++) {
                 if (players.get(i).getName().equalsIgnoreCase(name)) {
-                    idx = i; break;
+                    idx = i;
+                    break;
                 }
             }
             if (idx < 0) throw new NotFoundException("Player not found");
@@ -83,8 +84,11 @@ public class PlayerService {
             // mapuj typ
             PlayerType type = PlayerType.fromInput(dto.getType());
             if (type == null) {
-                try { type = PlayerType.valueOf(dto.getType().trim().toUpperCase()); }
-                catch (Exception ignored) { type = PlayerType.AMATER; }
+                try {
+                    type = PlayerType.valueOf(dto.getType().trim().toUpperCase());
+                } catch (Exception ignored) {
+                    type = PlayerType.AMATER;
+                }
             }
 
             // meno ponecháme pôvodné (renaming riešime neskôr), update len age + type

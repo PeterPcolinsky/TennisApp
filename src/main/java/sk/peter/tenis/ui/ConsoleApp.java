@@ -516,6 +516,7 @@ public class ConsoleApp {
 
     /**
      * Zmaže všetky zápasy, v ktorých sa hráč zúčastnil (ako A alebo B).
+     *
      * @return počet odstránených zápasov
      */
     private int removeMatchesOf(Player player) {

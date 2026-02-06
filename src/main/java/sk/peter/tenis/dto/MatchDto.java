@@ -29,15 +29,35 @@ public class MatchDto {
     private String date;
 
     // getters & setters
-    public String getPlayerA() { return playerA; }
-    public void setPlayerA(String playerA) { this.playerA = playerA; }
+    public String getPlayerA() {
+        return playerA;
+    }
 
-    public String getPlayerB() { return playerB; }
-    public void setPlayerB(String playerB) { this.playerB = playerB; }
+    public void setPlayerA(String playerA) {
+        this.playerA = playerA;
+    }
 
-    public String getScore() { return score; }
-    public void setScore(String score) { this.score = score; }
+    public String getPlayerB() {
+        return playerB;
+    }
 
-    public String getDate() { return date; }
-    public void setDate(String date) { this.date = date; }
+    public void setPlayerB(String playerB) {
+        this.playerB = playerB;
+    }
+
+    public String getScore() {
+        return score;
+    }
+
+    public void setScore(String score) {
+        this.score = score;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
 }

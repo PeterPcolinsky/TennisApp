@@ -24,7 +24,8 @@ public final class CsvService {
     private static final Path PLAYERS_CSV = DATA_DIR.resolve("players.csv");
     private static final Path MATCHES_CSV = DATA_DIR.resolve("matches.csv");
 
-    private CsvService() { }
+    private CsvService() {
+    }
 
     // ====================== PLAYERS ======================
 
@@ -79,7 +80,10 @@ public final class CsvService {
 
                 boolean exists = false;
                 for (Player p : target) {
-                    if (p.getName().equalsIgnoreCase(name)) { exists = true; break; }
+                    if (p.getName().equalsIgnoreCase(name)) {
+                        exists = true;
+                        break;
+                    }
                 }
                 if (!exists) {
                     target.add(new Player(name, age, type));
