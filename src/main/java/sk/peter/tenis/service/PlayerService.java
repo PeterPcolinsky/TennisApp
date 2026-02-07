@@ -9,9 +9,20 @@ import sk.peter.tenis.model.PlayerType;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service responsible for managing players in the CSV-based mode.
+ * <p>
+ * This service loads and persists players via {@link CsvService}. It provides basic CRUD operations:
+ * list all players, create a new player, update existing player and delete a player.
+ */
 @Service
 public class PlayerService {
 
+    /**
+     * Returns all players loaded from CSV storage.
+     *
+     * @return list of all players (empty if nothing could be loaded)
+     */
     public List<Player> findAll() {
         List<Player> result = new ArrayList<>();
         try {
@@ -22,6 +33,15 @@ public class PlayerService {
         return result;
     }
 
+    /**
+     * Creates a new {@link Player} from {@link PlayerDto}, validates duplicates and persists the result to CSV.
+     * <p>
+     * Duplicate check is case-insensitive and compares the whole name.
+     *
+     * @param dto input data for player creation
+     * @return created player
+     * @throws IllegalArgumentException if a player with the same name already exists
+     */
     public Player createFromDto(PlayerDto dto) {
         String name = dto.getName().trim();
 
@@ -66,6 +86,17 @@ public class PlayerService {
         return p;
     }
 
+    /**
+     * Updates an existing player identified by name (case-insensitive).
+     * <p>
+     * In the current CSV phase the player's name is not changed (rename is handled later).
+     * Only age and type are updated.
+     *
+     * @param name player name used to find the player (case-insensitive)
+     * @param dto  input data with new values
+     * @return updated player
+     * @throws NotFoundException if the player was not found
+     */
     public Player update(String name, PlayerDto dto) {
         List<Player> players = new ArrayList<>();
         try {
@@ -106,6 +137,12 @@ public class PlayerService {
         }
     }
 
+    /**
+     * Deletes an existing player identified by name (case-insensitive) and persists the change to CSV.
+     *
+     * @param name player name to delete (case-insensitive)
+     * @throws NotFoundException if the player was not found
+     */
     public void delete(String name) {
         List<Player> players = new ArrayList<>();
         try {
