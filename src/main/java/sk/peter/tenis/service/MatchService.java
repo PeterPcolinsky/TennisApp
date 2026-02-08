@@ -11,6 +11,12 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service responsible for managing tennis matches.
+ * <p>
+ * Handles loading, validation, creation, update and deletion of matches
+ * in CSV-based mode, keeping the same business rules as the console version.
+ */
 @Service
 public class MatchService {
 
@@ -31,7 +37,11 @@ public class MatchService {
     }
 
     /**
-     * Spoločná biznis validácia zápasu – používa sa v CSV aj JPA režime.
+     * Performs common business validation for a tennis match.
+     * Used in both CSV and JPA modes.
+     *
+     * @param dto match input data
+     * @throws IllegalArgumentException if validation rules are violated
      */
     public void validateMatchBusinessRules(MatchDto dto) {
         if (dto == null) {
@@ -108,9 +118,14 @@ public class MatchService {
     }
 
     /**
-     * Vytvorí zápas z DTO, skontroluje existenciu hráčov podľa mena
-     * (case-insensitive) a uloží do CSV cez CsvService.saveMatches(..).
-     * Duplicitám sa snažíme zabrániť rovnakou logikou ako v CsvService.
+     * Creates a new match from DTO, validates business rules and persists it to CSV.
+     * <p>
+     * Players are resolved by name (case-insensitive). If an identical match already
+     * exists, it is not stored again.
+     *
+     * @param dto match input data
+     * @return created match
+     * @throws IllegalArgumentException if players are not found or validation fails
      */
     public Match createFromDto(MatchDto dto) {
         // 🔥 spoločná biznis validácia
@@ -210,6 +225,17 @@ public class MatchService {
         return null;
     }
 
+    /**
+     * Updates an existing match identified by players, score and date.
+     *
+     * @param playerA name of player A
+     * @param playerB name of player B
+     * @param date    original match date
+     * @param score   original match score
+     * @param dto     new match values
+     * @return updated match
+     * @throws NotFoundException if the match does not exist
+     */
     public Match update(String playerA, String playerB, String date, String score, MatchUpdateDto dto) {
         List<Player> players = new ArrayList<>();
         List<Match> matches = new ArrayList<>();
@@ -250,6 +276,15 @@ public class MatchService {
         }
     }
 
+    /**
+     * Deletes an existing match identified by players, score and date.
+     *
+     * @param playerA name of player A
+     * @param playerB name of player B
+     * @param date    match date
+     * @param score   match score
+     * @throws NotFoundException if the match does not exist
+     */
     public void delete(String playerA, String playerB, String date, String score) {
         List<Player> players = new ArrayList<>();
         List<Match> matches = new ArrayList<>();
