@@ -15,7 +15,10 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Služba pre výpočet štatistík hráčov na základe dát z DB (MySQL/H2).
+ * Service for computing player statistics and leaderboard from the database (H2/MySQL).
+ * <p>
+ * This service is active only for {@code h2} and {@code mysql} profiles and uses repositories
+ * to read matches and players.
  */
 @Service
 @Profile({"h2", "mysql"})
@@ -31,8 +34,12 @@ public class StatsService {
     }
 
     /**
-     * Pôvodná metóda – štatistiky pre daného hráča (bez dátumového rozsahu).
-     * Teraz používa zápasy z DB (MatchEntity).
+     * Returns statistics for a given player (without a date range).
+     * Uses matches loaded from DB ({@link MatchEntity}).
+     *
+     * @param playerName player name (must not be blank)
+     * @return computed statistics for the given player
+     * @throws IllegalArgumentException if {@code playerName} is null/blank
      */
     public PlayerStatsDto getStatsForPlayer(String playerName) {
         if (playerName == null || playerName.isBlank()) {
@@ -95,7 +102,9 @@ public class StatsService {
     }
 
     /**
-     * Leaderboard – teraz kompletne z DB (players + matches).
+     * Builds leaderboard rows from players and matches stored in DB.
+     *
+     * @return leaderboard sorted by win rate (descending)
      */
     public List<LeaderboardDto> getLeaderboard() {
         try {
@@ -162,7 +171,13 @@ public class StatsService {
     }
 
     /**
-     * Nová verzia – používa LocalDate pre rozsahy dátumov, teraz tiež z DB.
+     * Returns statistics for a given player with an optional date range.
+     * Uses {@link LocalDate} boundaries (inclusive) and matches from DB.
+     *
+     * @param playerName player name (must not be blank)
+     * @param from       start date (inclusive), can be null
+     * @param to         end date (inclusive), can be null
+     * @return computed statistics or {@code null} when input is blank or on error
      */
     public PlayerStatsDto getPlayerStats(String playerName, LocalDate from, LocalDate to) {
         if (playerName == null || playerName.isBlank()) return null;
@@ -220,6 +235,13 @@ public class StatsService {
         }
     }
 
+    /**
+     * Calculates win rate in percent (0-100) from wins and losses.
+     *
+     * @param wins   number of wins
+     * @param losses number of losses
+     * @return win rate percentage
+     */
     public double calcWinRate(int wins, int losses) {
         int finished = wins + losses;
         if (finished == 0) return 0.0;
