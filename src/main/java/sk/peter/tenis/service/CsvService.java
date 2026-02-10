@@ -13,10 +13,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CSV I/O služba pre hráčov a zápasy (adresár data/*.csv).
- * Formáty:
- * - Players: "Meno;Vek;Typ"
- * - Matches: "HracA;HracB;Vysledok;Datum"
+ * CSV I/O service for players and matches stored in {@code data/*.csv}.
+ * <p>
+ * Supported formats:
+ * <ul>
+ *   <li>Players: {@code "Meno;Vek;Typ"}</li>
+ *   <li>Matches: {@code "HracA;HracB;Vysledok;Datum"}</li>
+ * </ul>
+ * This service is used in CSV mode to mirror the same business rules
+ * as the console version of the application.
  */
 public final class CsvService {
 
@@ -29,6 +34,12 @@ public final class CsvService {
 
     // ====================== PLAYERS ======================
 
+    /**
+     * Loads all players from {@code players.csv}.
+     *
+     * @return list of loaded players
+     * @throws Exception if file I/O fails
+     */
     public static List<Player> loadPlayersFromCsv() throws Exception {
         List<Player> players = new ArrayList<>();
         loadPlayers(players);
@@ -36,7 +47,11 @@ public final class CsvService {
     }
 
     /**
-     * Načíta hráčov z players.csv do cieľového zoznamu.
+     * Loads players from {@code players.csv} into the provided target list.
+     * Duplicate player names (case-insensitive) are ignored.
+     *
+     * @param target target list to be filled with players
+     * @throws Exception if file I/O fails
      */
     public static void loadPlayers(List<Player> target) throws Exception {
         ensureDataDir();
@@ -92,6 +107,12 @@ public final class CsvService {
         }
     }
 
+    /**
+     * Persists the given list of players to {@code players.csv}.
+     *
+     * @param players players to save
+     * @throws Exception if file I/O fails
+     */
     public static void savePlayers(List<Player> players) throws Exception {
         ensureDataDir();
         try (var writer = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
@@ -106,12 +127,27 @@ public final class CsvService {
 
     // ====================== MATCHES ======================
 
+    /**
+     * Loads all matches from {@code matches.csv}.
+     *
+     * @param players list of known players used to resolve player references
+     * @return list of loaded matches
+     * @throws Exception if file I/O fails
+     */
     public static List<Match> loadMatchesFromCsv(List<Player> players) throws Exception {
         List<Match> matches = new ArrayList<>();
         loadMatches(matches, players);
         return matches;
     }
 
+    /**
+     * Loads matches from {@code matches.csv} into the provided target list.
+     * Only valid matches with existing players and valid scores are loaded.
+     *
+     * @param target  target list to be filled with matches
+     * @param players list of known players used to resolve player references
+     * @throws Exception if file I/O fails
+     */
     public static void loadMatches(List<Match> target, List<Player> players) throws Exception {
         ensureDataDir();
 
@@ -163,6 +199,12 @@ public final class CsvService {
         }
     }
 
+    /**
+     * Persists the given list of matches to {@code matches.csv}.
+     *
+     * @param matches matches to save
+     * @throws Exception if file I/O fails
+     */
     public static void saveMatches(List<Match> matches) throws Exception {
         ensureDataDir();
         try (var writer = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
@@ -178,7 +220,7 @@ public final class CsvService {
         }
     }
 
-    // ====================== POMOCNÉ METÓDY ======================
+    // ====================== HELPER METHODS ======================
 
     private static Player findPlayerByExactName(List<Player> players, String name) {
         for (Player p : players) {
