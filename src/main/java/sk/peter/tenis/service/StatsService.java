@@ -88,17 +88,13 @@ public class StatsService {
             else losses++;
         }
 
-        double winRate = total == 0 ? 0.0 : round((wins * 100.0) / total);
+        double winRate = calcWinRate(wins, losses);
         return new PlayerStatsDto(playerName, total, wins, losses, winRate);
     }
 
     private boolean involves(MatchEntity m, String target) {
         return m.getPlayerA().getName().equalsIgnoreCase(target)
                 || m.getPlayerB().getName().equalsIgnoreCase(target);
-    }
-
-    private double round(double v) {
-        return Math.round(v * 10.0) / 10.0;
     }
 
     /**
@@ -166,7 +162,7 @@ public class StatsService {
             else losses++;
         }
 
-        double winRate = total == 0 ? 0.0 : Math.round((wins * 1000.0 / total)) / 10.0;
+        double winRate = calcWinRate(wins, losses);
         return new LeaderboardDto(name, total, wins, losses, winRate);
     }
 
@@ -227,7 +223,7 @@ public class StatsService {
                 else losses++;
             }
 
-            double winRate = total == 0 ? 0.0 : Math.round((wins * 1000.0 / total)) / 10.0;
+            double winRate = calcWinRate(wins, losses);
             return new PlayerStatsDto(playerName.trim(), total, wins, losses, winRate);
 
         } catch (Exception e) {
@@ -237,14 +233,17 @@ public class StatsService {
 
     /**
      * Calculates win rate in percent (0-100) from wins and losses.
+     * Result is rounded to 1 decimal place.
      *
      * @param wins   number of wins
      * @param losses number of losses
-     * @return win rate percentage
+     * @return win rate percentage (rounded to 1 decimal)
      */
     public double calcWinRate(int wins, int losses) {
         int finished = wins + losses;
         if (finished == 0) return 0.0;
-        return (wins * 100.0) / finished;
+
+        double raw = (wins * 100.0) / finished;
+        return Math.round(raw * 10.0) / 10.0;
     }
 }
