@@ -20,11 +20,6 @@ import java.util.List;
 @Service
 public class MatchService {
 
-    /**
-     * Načíta všetky zápasy z CSV.
-     * Použije CsvService.loadPlayers(..) a CsvService.loadMatches(..),
-     * aby sa zachovalo rovnaké správanie/validácie ako v konzolovej verzii.
-     */
     public List<Match> findAll() {
         List<Player> players = new ArrayList<>();
         List<Match> matches = new ArrayList<>();
@@ -36,13 +31,6 @@ public class MatchService {
         return matches;
     }
 
-    /**
-     * Performs common business validation for a tennis match.
-     * Used in both CSV and JPA modes.
-     *
-     * @param dto match input data
-     * @throws IllegalArgumentException if validation rules are violated
-     */
     public void validateMatchBusinessRules(MatchDto dto) {
         if (dto == null) {
             throw new IllegalArgumentException("Zápas nesmie byť prázdny.");
@@ -62,9 +50,6 @@ public class MatchService {
         validateScore(dto.getScore());
     }
 
-    /**
-     * Validácia skóre – základné tenisové pravidlá pre jednotlivé sety.
-     */
     private void validateScore(String rawScore) {
         if (rawScore == null) {
             throw new IllegalArgumentException("Skóre je povinné.");
@@ -117,61 +102,39 @@ public class MatchService {
         }
     }
 
-    /**
-     * Creates a new match from DTO, validates business rules and persists it to CSV.
-     * <p>
-     * Players are resolved by name (case-insensitive). If an identical match already
-     * exists, it is not stored again.
-     *
-     * @param dto match input data
-     * @return created match
-     * @throws IllegalArgumentException if players are not found or validation fails
-     */
     public Match createFromDto(MatchDto dto) {
-        // 🔥 spoločná biznis validácia
         validateMatchBusinessRules(dto);
 
         List<Player> players = new ArrayList<>();
         List<Match> matches = new ArrayList<>();
 
         try {
-            // 1) načítaj existujúcich hráčov a zápasy
             CsvService.loadPlayers(players);
             CsvService.loadMatches(matches, players);
 
-            // 2) nájdi hráčov podľa presného mena (case-insensitive)
             Player a = findPlayerByExactName(players, dto.getPlayerA());
             Player b = findPlayerByExactName(players, dto.getPlayerB());
             if (a == null || b == null) {
-                // ⚠️ Toto musí ostať výnimka – test očakáva BAD_REQUEST
                 throw new IllegalArgumentException("Player(s) not found");
             }
 
-            // 3) zostav objekt Match
-            LocalDate date = LocalDate.parse(dto.getDate()); // YYYY-MM-DD
+            LocalDate date = LocalDate.parse(dto.getDate());
             Match m = new Match(a, b, dto.getScore(), date);
 
-            // 4) kontrola duplicity
             if (matchExists(matches, m)) {
-                // ⚠️ Ak už zápas existuje, len ho vráť, ale NEulož znova
                 return m;
             }
 
-            // 5) ulož
             matches.add(m);
             CsvService.saveMatches(matches);
             return m;
 
         } catch (IllegalArgumentException iae) {
-            // Toto necháme prejsť ďalej do ApiExceptionHandler → 400 + detailná správa
             throw iae;
         } catch (Exception e) {
-            // Iné technické chyby (I/O, parse…) nechajme na generickú hlášku
-            return null;
+            throw new RuntimeException("Unable to create match", e);
         }
     }
-
-    // ===== pomocné metódy (lokálne, zrkadlia logiku z CsvService) =====
 
     private Player findPlayerByExactName(List<Player> players, String name) {
         if (name == null) return null;
@@ -225,32 +188,18 @@ public class MatchService {
         return null;
     }
 
-    /**
-     * Updates an existing match identified by players, score and date.
-     *
-     * @param playerA name of player A
-     * @param playerB name of player B
-     * @param date    original match date
-     * @param score   original match score
-     * @param dto     new match values
-     * @return updated match
-     * @throws NotFoundException if the match does not exist
-     */
     public Match update(String playerA, String playerB, String date, String score, MatchUpdateDto dto) {
         List<Player> players = new ArrayList<>();
         List<Match> matches = new ArrayList<>();
         try {
-            // načítaj dáta
             CsvService.loadPlayers(players);
             CsvService.loadMatches(matches, players);
 
-            // nájdi existujúci zápas podľa A,B,score,date (mena case-insensitive)
             Match existing = findMatch(matches, playerA, playerB, score, date);
             if (existing == null) {
                 throw new NotFoundException("Match not found");
             }
 
-            // nové hodnoty
             String newScore = (dto.getNewScore() != null && !dto.getNewScore().isBlank())
                     ? dto.getNewScore().trim()
                     : existing.getScore();
@@ -259,10 +208,8 @@ public class MatchService {
                     ? LocalDate.parse(dto.getNewDate().trim())
                     : existing.getDate();
 
-            // vytvor aktualizovaný objekt
             Match updated = new Match(existing.getPlayerA(), existing.getPlayerB(), newScore, newDate);
 
-            // nahraď v kolekcii a ulož
             int idx = matches.indexOf(existing);
             matches.set(idx, updated);
             CsvService.saveMatches(matches);
@@ -271,20 +218,10 @@ public class MatchService {
         } catch (NotFoundException nf) {
             throw nf;
         } catch (Exception e) {
-            // jednoduché spracovanie chýb v CSV fáze
-            return null;
+            throw new RuntimeException("Unable to update match", e);
         }
     }
 
-    /**
-     * Deletes an existing match identified by players, score and date.
-     *
-     * @param playerA name of player A
-     * @param playerB name of player B
-     * @param date    match date
-     * @param score   match score
-     * @throws NotFoundException if the match does not exist
-     */
     public void delete(String playerA, String playerB, String date, String score) {
         List<Player> players = new ArrayList<>();
         List<Match> matches = new ArrayList<>();
@@ -302,8 +239,7 @@ public class MatchService {
         } catch (NotFoundException nf) {
             throw nf;
         } catch (Exception e) {
-            throw new RuntimeException("Unable to delete match");
+            throw new RuntimeException("Unable to delete match", e);
         }
     }
-
 }
