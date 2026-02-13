@@ -33,18 +33,18 @@ public class MatchService {
 
     public void validateMatchBusinessRules(MatchDto dto) {
         if (dto == null) {
-            throw new IllegalArgumentException("Zápas nesmie byť prázdny.");
+            throw new IllegalArgumentException("Match must not be null.");
         }
 
         String aName = dto.getPlayerA() != null ? dto.getPlayerA().trim() : "";
         String bName = dto.getPlayerB() != null ? dto.getPlayerB().trim() : "";
 
         if (aName.isEmpty() || bName.isEmpty()) {
-            throw new IllegalArgumentException("Meno hráča A aj B je povinné.");
+            throw new IllegalArgumentException("Both player A and player B names are required.");
         }
 
         if (aName.equalsIgnoreCase(bName)) {
-            throw new IllegalArgumentException("Hráč A a hráč B musia byť rozdielni.");
+            throw new IllegalArgumentException("Player A and player B must be different.");
         }
 
         validateScore(dto.getScore());
@@ -52,12 +52,12 @@ public class MatchService {
 
     private void validateScore(String rawScore) {
         if (rawScore == null) {
-            throw new IllegalArgumentException("Skóre je povinné.");
+            throw new IllegalArgumentException("Score is required.");
         }
 
         String score = rawScore.trim();
         if (score.isEmpty()) {
-            throw new IllegalArgumentException("Skóre je povinné.");
+            throw new IllegalArgumentException("Score is required.");
         }
 
         String[] sets = score.split(",");
@@ -65,7 +65,7 @@ public class MatchService {
             String s = part.trim();
             String[] games = s.split(":");
             if (games.length != 2) {
-                throw new IllegalArgumentException("Neplatný formát skóre. Použi napr. \"6:4\" alebo \"6:4, 7:6\".");
+                throw new IllegalArgumentException("Invalid score format. Use e.g. \"6:4\" or \"6:4, 7:6\".");
             }
 
             int gA;
@@ -74,30 +74,30 @@ public class MatchService {
                 gA = Integer.parseInt(games[0].trim());
                 gB = Integer.parseInt(games[1].trim());
             } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException("Skóre musí obsahovať len čísla (napr. \"6:4\").");
+                throw new IllegalArgumentException("Score must contain numbers only (e.g. \"6:4\").");
             }
 
             if (gA == gB) {
-                throw new IllegalArgumentException("Set nemôže skončiť remízou (napr. 6:6).");
+                throw new IllegalArgumentException("A set cannot end in a draw (e.g. 6:6).");
             }
 
             int max = Math.max(gA, gB);
             int min = Math.min(gA, gB);
 
             if (max < 6) {
-                throw new IllegalArgumentException("Víťaz setu musí mať aspoň 6 gemov.");
+                throw new IllegalArgumentException("Set winner must have at least 6 games.");
             }
 
             if (max == 6 && max - min < 2) {
-                throw new IllegalArgumentException("Pri 6 gemoch musí byť rozdiel aspoň 2 (napr. 6:4).");
+                throw new IllegalArgumentException("At 6 games, the difference must be at least 2 (e.g. 6:4).");
             }
 
             if (max == 7 && min < 5) {
-                throw new IllegalArgumentException("Set 7:x je možný len ako 7:5 alebo 7:6.");
+                throw new IllegalArgumentException("A 7:x set is only allowed as 7:5 or 7:6.");
             }
 
             if (max > 7) {
-                throw new IllegalArgumentException("Počet gemov v sete je príliš vysoký.");
+                throw new IllegalArgumentException("Too many games in a set.");
             }
         }
     }
