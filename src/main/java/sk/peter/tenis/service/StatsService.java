@@ -46,7 +46,7 @@ public class StatsService {
             throw new IllegalArgumentException("Player name must not be empty.");
         }
 
-        final String target = playerName.trim().toLowerCase();
+        final String target = playerName.trim().toLowerCase(Locale.ROOT);
 
         List<MatchEntity> allMatches = matchRepository.findAll();
 
@@ -55,38 +55,10 @@ public class StatsService {
                 .toList();
 
         int total = playerMatches.size();
-        int wins = 0;
-        int losses = 0;
 
-        for (MatchEntity m : playerMatches) {
-            String score = m.getResult();
-            if (score == null || !score.contains(":")) continue;
-
-            String[] sets = score.split(",");
-            int setsA = 0;
-            int setsB = 0;
-
-            for (String s : sets) {
-                String[] games = s.trim().split(":");
-                if (games.length != 2) continue;
-                try {
-                    int gamesA = Integer.parseInt(games[0].trim());
-                    int gamesB = Integer.parseInt(games[1].trim());
-                    if (gamesA > gamesB) setsA++;
-                    else if (gamesB > gamesA) setsB++;
-                } catch (NumberFormatException ignored) {
-                }
-            }
-
-            if (setsA == 0 && setsB == 0) continue;
-
-            String winner = setsA > setsB
-                    ? m.getPlayerA().getName().toLowerCase()
-                    : m.getPlayerB().getName().toLowerCase();
-
-            if (winner.equals(target)) wins++;
-            else losses++;
-        }
+        int[] wl = calculateWinsAndLosses(playerMatches, target);
+        int wins = wl[0];
+        int losses = wl[1];
 
         double winRate = calcWinRate(wins, losses);
         return new PlayerStatsDto(playerName, total, wins, losses, winRate);
@@ -129,10 +101,83 @@ public class StatsService {
                 .toList();
 
         int total = playerMatches.size();
+
+        int[] wl = calculateWinsAndLosses(playerMatches, lowerName);
+        int wins = wl[0];
+        int losses = wl[1];
+
+        double winRate = calcWinRate(wins, losses);
+        return new LeaderboardDto(name, total, wins, losses, winRate);
+    }
+
+    /**
+     * Returns statistics for a given player with an optional date range.
+     * Uses {@link LocalDate} boundaries (inclusive) and matches from DB.
+     *
+     * @param playerName player name (must not be blank)
+     * @param from       start date (inclusive), can be null
+     * @param to         end date (inclusive), can be null
+     * @return computed statistics or {@code null} when input is blank or on error
+     */
+    public PlayerStatsDto getPlayerStats(String playerName, LocalDate from, LocalDate to) {
+        if (playerName == null || playerName.isBlank()) return null;
+
+        try {
+            List<MatchEntity> matches = matchRepository.findAll();
+            final String target = playerName.trim().toLowerCase(Locale.ROOT);
+
+            List<MatchEntity> playerMatches = matches.stream()
+                    .filter(m -> m.getPlayerA().getName().equalsIgnoreCase(target)
+                            || m.getPlayerB().getName().equalsIgnoreCase(target))
+                    .filter(m ->
+                            (from == null || !m.getDate().isBefore(from))
+                                    && (to == null || !m.getDate().isAfter(to))
+                    )
+                    .toList();
+
+            int total = playerMatches.size();
+
+            int[] wl = calculateWinsAndLosses(playerMatches, target);
+            int wins = wl[0];
+            int losses = wl[1];
+
+            double winRate = calcWinRate(wins, losses);
+            return new PlayerStatsDto(playerName.trim(), total, wins, losses, winRate);
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Calculates win rate in percent (0-100) from wins and losses.
+     * Result is rounded to 1 decimal place.
+     *
+     * @param wins   number of wins
+     * @param losses number of losses
+     * @return win rate percentage (rounded to 1 decimal)
+     */
+    public double calcWinRate(int wins, int losses) {
+        int finished = wins + losses;
+        if (finished == 0) return 0.0;
+
+        double raw = (wins * 100.0) / finished;
+        return Math.round(raw * 10.0) / 10.0;
+    }
+
+    /**
+     * Calculates wins and losses for the given player within the provided match list.
+     * Score parsing is based on set counting (winner is the player with more sets won).
+     *
+     * @param matches       list of matches to evaluate
+     * @param targetLower   player name in lowercase (for comparisons)
+     * @return array {wins, losses}
+     */
+    private int[] calculateWinsAndLosses(List<MatchEntity> matches, String targetLower) {
         int wins = 0;
         int losses = 0;
 
-        for (MatchEntity m : playerMatches) {
+        for (MatchEntity m : matches) {
             String score = m.getResult();
             if (score == null || !score.contains(":")) continue;
 
@@ -158,92 +203,10 @@ public class StatsService {
                     ? m.getPlayerA().getName().toLowerCase(Locale.ROOT)
                     : m.getPlayerB().getName().toLowerCase(Locale.ROOT);
 
-            if (winner.equals(lowerName)) wins++;
+            if (winner.equals(targetLower)) wins++;
             else losses++;
         }
 
-        double winRate = calcWinRate(wins, losses);
-        return new LeaderboardDto(name, total, wins, losses, winRate);
-    }
-
-    /**
-     * Returns statistics for a given player with an optional date range.
-     * Uses {@link LocalDate} boundaries (inclusive) and matches from DB.
-     *
-     * @param playerName player name (must not be blank)
-     * @param from       start date (inclusive), can be null
-     * @param to         end date (inclusive), can be null
-     * @return computed statistics or {@code null} when input is blank or on error
-     */
-    public PlayerStatsDto getPlayerStats(String playerName, LocalDate from, LocalDate to) {
-        if (playerName == null || playerName.isBlank()) return null;
-
-        try {
-            List<MatchEntity> matches = matchRepository.findAll();
-            final String target = playerName.trim();
-
-            List<MatchEntity> playerMatches = matches.stream()
-                    .filter(m -> m.getPlayerA().getName().equalsIgnoreCase(target)
-                            || m.getPlayerB().getName().equalsIgnoreCase(target))
-                    .filter(m ->
-                            (from == null || !m.getDate().isBefore(from))
-                                    && (to == null || !m.getDate().isAfter(to))
-                    )
-                    .toList();
-
-            int total = playerMatches.size();
-            int wins = 0;
-            int losses = 0;
-
-            for (MatchEntity m : playerMatches) {
-                String score = m.getResult();
-                if (score == null || !score.contains(":")) continue;
-
-                String[] sets = score.split(",");
-                int setsA = 0, setsB = 0;
-
-                for (String s : sets) {
-                    String[] games = s.trim().split(":");
-                    if (games.length != 2) continue;
-                    try {
-                        int gamesA = Integer.parseInt(games[0].trim());
-                        int gamesB = Integer.parseInt(games[1].trim());
-                        if (gamesA > gamesB) setsA++;
-                        else if (gamesB > gamesA) setsB++;
-                    } catch (NumberFormatException ignored) {
-                    }
-                }
-
-                if (setsA == 0 && setsB == 0) continue;
-                String winner = (setsA > setsB)
-                        ? m.getPlayerA().getName()
-                        : m.getPlayerB().getName();
-
-                if (winner.equalsIgnoreCase(target)) wins++;
-                else losses++;
-            }
-
-            double winRate = calcWinRate(wins, losses);
-            return new PlayerStatsDto(playerName.trim(), total, wins, losses, winRate);
-
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    /**
-     * Calculates win rate in percent (0-100) from wins and losses.
-     * Result is rounded to 1 decimal place.
-     *
-     * @param wins   number of wins
-     * @param losses number of losses
-     * @return win rate percentage (rounded to 1 decimal)
-     */
-    public double calcWinRate(int wins, int losses) {
-        int finished = wins + losses;
-        if (finished == 0) return 0.0;
-
-        double raw = (wins * 100.0) / finished;
-        return Math.round(raw * 10.0) / 10.0;
+        return new int[]{wins, losses};
     }
 }
