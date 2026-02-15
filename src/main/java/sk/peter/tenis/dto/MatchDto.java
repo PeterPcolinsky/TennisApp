@@ -4,10 +4,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * DTO pre vytváranie/validáciu zápasu cez REST API.
- * CSV formát: HracA;HracB;Vysledok;Datum
- * - date očakávame vo formáte YYYY-MM-DD (napr. 2025-10-19)
- * - score ponecháme ako text (napr. "6:4, 3:6, 7:5")
+ * Data Transfer Object used for creating and validating tennis matches
+ * via REST API.
+ * <p>
+ * Expected CSV format: {@code PlayerA;PlayerB;Score;Date}
+ * <ul>
+ *     <li>Date must be in format {@code YYYY-MM-DD} (e.g. 2025-10-19)</li>
+ *     <li>Score is provided as text (e.g. "6:4, 3:6, 7:5")</li>
+ * </ul>
  */
 public class MatchDto {
 
