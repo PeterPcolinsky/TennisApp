@@ -1,4 +1,4 @@
-package sk.peter.tenis;
+package sk.peter.tenis.config;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Profile;
@@ -14,13 +14,13 @@ import java.util.List;
 
 @Component
 @Profile("mysql")   // 💡 Aktivuje sa iba pri MySQL profile
-public class DataSeeder {
+public class MySqlDataSeeder {
 
     private final PlayerJpaService playerJpaService;
     private final MatchJpaService matchJpaService;
 
-    public DataSeeder(PlayerJpaService playerJpaService,
-                      MatchJpaService matchJpaService) {
+    public MySqlDataSeeder(PlayerJpaService playerJpaService,
+                           MatchJpaService matchJpaService) {
         this.playerJpaService = playerJpaService;
         this.matchJpaService = matchJpaService;
     }
