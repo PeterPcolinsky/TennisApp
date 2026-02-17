@@ -3,6 +3,7 @@ package sk.peter.tenis.config;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import sk.peter.tenis.model.Match;
 import sk.peter.tenis.model.Player;
 import sk.peter.tenis.service.CsvService;
@@ -25,6 +26,7 @@ public class MySqlDataSeeder {
         this.matchJpaService = matchJpaService;
     }
 
+    @Transactional
     @PostConstruct
     public void seedData() {
         try {

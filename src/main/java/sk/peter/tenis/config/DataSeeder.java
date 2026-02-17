@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.transaction.annotation.Transactional;
 import sk.peter.tenis.entity.PlayerEntity;
 import sk.peter.tenis.model.PlayerType;
 import sk.peter.tenis.repository.PlayerRepository;
@@ -32,6 +33,7 @@ public class DataSeeder {
         this.playerRepository = playerRepository;
     }
 
+    @Transactional
     @PostConstruct
     public void seed() throws IOException {
         if (playerRepository.count() > 0) {
