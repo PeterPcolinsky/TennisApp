@@ -76,4 +76,8 @@ public class PlayerJpaService {
         playerRepository.findByNameIgnoreCase(name)
                 .ifPresent(player -> playerRepository.deleteById(player.getId()));
     }
+
+    public long count() {
+        return playerRepository.count();
+    }
 }

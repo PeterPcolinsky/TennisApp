@@ -31,7 +31,7 @@ public class MySqlDataSeeder {
     public void seedData() {
         try {
             // 🚫 Ak databáza už obsahuje dáta, neimportuj znova
-            if (!playerJpaService.findAll().isEmpty() || !matchJpaService.findAll().isEmpty()) {
+            if (playerJpaService.count() > 0 || matchJpaService.count() > 0) {
                 System.out.println("⚠️ Dáta už existujú v MySQL – import z CSV preskočený.");
                 return;
             }

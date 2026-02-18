@@ -95,4 +95,8 @@ public class MatchJpaService {
     public boolean existsById(Long id) {
         return matchRepository.existsById(id);
     }
+
+    public long count() {
+        return matchRepository.count();
+    }
 }
