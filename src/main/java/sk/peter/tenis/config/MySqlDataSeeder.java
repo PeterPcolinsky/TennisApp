@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@Profile("mysql")   // 💡 Aktivuje sa iba pri MySQL profile
+@Profile("mysql")   // Aktivuje sa iba pri MySQL profile
 public class MySqlDataSeeder {
 
     private final PlayerJpaService playerJpaService;
@@ -28,36 +28,33 @@ public class MySqlDataSeeder {
 
     @Transactional
     @PostConstruct
-    public void seedData() {
-        try {
-            // 🚫 Ak databáza už obsahuje dáta, neimportuj znova
-            if (playerJpaService.count() > 0 || matchJpaService.count() > 0) {
-                System.out.println("⚠️ Dáta už existujú v MySQL – import z CSV preskočený.");
-                return;
-            }
+    public void seedData() throws Exception {
+        // Ak databáza už obsahuje dáta, neimportuj znova
+        if (playerJpaService.count() > 0 || matchJpaService.count() > 0) {
+            System.out.println("⚠️ Dáta už existujú v MySQL – import z CSV preskočený.");
+            return;
+        }
 
-            // ✅ Načítaj hráčov z CSV
-            List<Player> players = new ArrayList<>();
-            CsvService.loadPlayers(players);
-            if (!players.isEmpty()) {
-                players.forEach(playerJpaService::save);
-                System.out.println("✅ Naimportovaných hráčov: " + players.size());
-            }
+        // Načítaj hráčov z CSV
+        List<Player> players = new ArrayList<>();
+        CsvService.loadPlayers(players);
 
-            // ✅ Načítaj zápasy z CSV
-            List<Match> matches = new ArrayList<>();
-            CsvService.loadMatches(matches, players);
-            if (!matches.isEmpty()) {
-                matches.forEach(matchJpaService::save);
-                System.out.println("✅ Naimportovaných zápasov: " + matches.size());
-            }
+        if (!players.isEmpty()) {
+            players.forEach(playerJpaService::save);
+            System.out.println("✅ Naimportovaných hráčov: " + players.size());
+        }
 
-            if (!players.isEmpty() || !matches.isEmpty()) {
-                System.out.println("🎾 CSV dáta boli úspešne naimportované do MySQL.");
-            }
+        // Načítaj zápasy z CSV
+        List<Match> matches = new ArrayList<>();
+        CsvService.loadMatches(matches, players);
 
-        } catch (Exception e) {
-            System.err.println("⚠️ Chyba pri importe CSV do MySQL: " + e.getMessage());
+        if (!matches.isEmpty()) {
+            matches.forEach(matchJpaService::save);
+            System.out.println("✅ Naimportovaných zápasov: " + matches.size());
+        }
+
+        if (!players.isEmpty() || !matches.isEmpty()) {
+            System.out.println("🎾 CSV dáta boli úspešne naimportované do MySQL.");
         }
     }
 }
