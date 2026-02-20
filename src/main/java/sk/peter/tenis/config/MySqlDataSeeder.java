@@ -13,6 +13,18 @@ import sk.peter.tenis.service.jpa.PlayerJpaService;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * One-time data seeder for the MySQL profile.
+ *
+ * Loads players and matches from CSV files into the database
+ * during application startup.
+ *
+ * The seeding process runs only when the "mysql" profile is active
+ * and only if the database does not already contain any data.
+ *
+ * The entire seeding operation is wrapped in a transaction
+ * to ensure atomicity and consistency.
+ */
 @Component
 @Profile("mysql")   // Aktivuje sa iba pri MySQL profile
 public class MySqlDataSeeder {
