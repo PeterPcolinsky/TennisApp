@@ -63,4 +63,14 @@ public class PlayerEntity {
     public void setType(PlayerType type) {
         this.type = type;
     }
+
+    @Override
+    public String toString() {
+        return "PlayerEntity{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", age=" + age +
+                ", type=" + type +
+                '}';
+    }
 }

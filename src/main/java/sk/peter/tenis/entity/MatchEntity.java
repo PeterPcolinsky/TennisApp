@@ -77,4 +77,15 @@ public class MatchEntity {
     public void setDate(LocalDate date) {
         this.date = date;
     }
+
+    @Override
+    public String toString() {
+        return "MatchEntity{" +
+                "id=" + id +
+                ", playerAId=" + (playerA != null ? playerA.getId() : null) +
+                ", playerBId=" + (playerB != null ? playerB.getId() : null) +
+                ", result='" + result + '\'' +
+                ", date=" + date +
+                '}';
+    }
 }
