@@ -1,8 +1,14 @@
 package sk.peter.tenis.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
+
+/**
+ * JPA entity representing a tennis match stored in the database.
+ *
+ * Maps to the "matches" table and contains references to two players,
+ * match result and match date.
+ */
 
 @Entity
 @Table(name = "matches")

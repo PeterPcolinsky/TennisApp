@@ -3,6 +3,13 @@ package sk.peter.tenis.entity;
 import jakarta.persistence.*;
 import sk.peter.tenis.model.PlayerType;
 
+/**
+ * JPA entity representing a tennis player stored in the database.
+ *
+ * Maps to the "players" table and contains basic player attributes
+ * such as name, age and type.
+ */
+
 @Entity
 @Table(name = "players")
 public class PlayerEntity {
