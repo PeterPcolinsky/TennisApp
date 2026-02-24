@@ -1,11 +1,11 @@
 package sk.peter.tenis.model;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * Tenisový zápas: hráč A, hráč B, textové skóre (sety) a dátum.
  */
-
 public class Match {
     private Player playerA;
     private Player playerB;
@@ -40,5 +40,21 @@ public class Match {
         return "Zápas: " + playerA.getName() + " vs " + playerB.getName() +
                 " | Výsledok: " + score +
                 " | Dátum: " + date;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Match match = (Match) o;
+        return Objects.equals(playerA, match.playerA) &&
+                Objects.equals(playerB, match.playerB) &&
+                Objects.equals(score, match.score) &&
+                Objects.equals(date, match.date);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(playerA, playerB, score, date);
     }
 }
