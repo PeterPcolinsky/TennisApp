@@ -11,7 +11,17 @@ public class Player {
      * Doménový objekt hráča: meno, vek a typ (amatér/profesionál).
      */
     public Player(String name, int age, PlayerType type) {
-        this.name = name;
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Name must not be null or blank");
+        }
+        if (age <= 0) {
+            throw new IllegalArgumentException("Age must be greater than 0");
+        }
+        if (type == null) {
+            throw new IllegalArgumentException("Player type must not be null");
+        }
+
+        this.name = name.trim();
         this.age = age;
         this.type = type;
     }
