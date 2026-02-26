@@ -9,7 +9,6 @@ import sk.peter.tenis.model.PlayerType;
  * Maps to the "players" table and contains basic player attributes
  * such as name, age and type.
  */
-
 @Entity
 @Table(name = "players")
 public class PlayerEntity {
@@ -79,5 +78,20 @@ public class PlayerEntity {
                 ", age=" + age +
                 ", type=" + type +
                 '}';
+    }
+
+    // --- equals & hashCode (JPA best practice) ---
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PlayerEntity)) return false;
+        PlayerEntity that = (PlayerEntity) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
