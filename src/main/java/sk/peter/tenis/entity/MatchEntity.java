@@ -94,4 +94,19 @@ public class MatchEntity {
                 ", date=" + date +
                 '}';
     }
+
+    // --- equals & hashCode (JPA best practice) ---
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MatchEntity)) return false;
+        MatchEntity that = (MatchEntity) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
