@@ -13,7 +13,6 @@ import sk.peter.tenis.model.Match;
 import sk.peter.tenis.model.Player;
 import sk.peter.tenis.service.MatchService;
 import sk.peter.tenis.service.jpa.MatchJpaService;
-import sk.peter.tenis.service.jpa.PlayerJpaService;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -27,16 +26,13 @@ public class MatchController {
 
     private final MatchService csvService;
     private final MatchJpaService jpaService;
-    private final PlayerJpaService playerJpaService;
     private final Environment env;
 
     public MatchController(MatchService csvService,
                            MatchJpaService jpaService,
-                           PlayerJpaService playerJpaService,
                            Environment env) {
         this.csvService = csvService;
         this.jpaService = jpaService;
-        this.playerJpaService = playerJpaService;
         this.env = env;
     }
 
