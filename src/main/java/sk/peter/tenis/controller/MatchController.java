@@ -51,6 +51,10 @@ public class MatchController {
         );
     }
 
+    private ResponseEntity<Map<String, String>> badRequest(String message) {
+        return ResponseEntity.badRequest().body(Map.of("error", message));
+    }
+
     // -------------------- GET ALL --------------------
     @GetMapping
     public ResponseEntity<?> getAllMatches() {
@@ -68,66 +72,73 @@ public class MatchController {
     @PostMapping
     public ResponseEntity<?> createMatch(@RequestBody @Valid MatchDto matchDto) {
         if (isJpaActive()) {
-            // 🔥 spoločná biznis validácia (mena, skóre)
+
             csvService.validateMatchBusinessRules(matchDto);
 
             Player playerA = new Player(matchDto.getPlayerA(), 0, null);
             Player playerB = new Player(matchDto.getPlayerB(), 0, null);
-            Match match = new Match(playerA, playerB, matchDto.getScore(), LocalDate.parse(matchDto.getDate()));
+            Match match = new Match(
+                    playerA,
+                    playerB,
+                    matchDto.getScore(),
+                    LocalDate.parse(matchDto.getDate())
+            );
 
             var saved = jpaService.save(match);
             if (saved == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "Player(s) not found"));
+                return badRequest("Player(s) not found");
             }
-            // ✅ vraciame DTO, nie entitu
+
             return ResponseEntity.status(HttpStatus.CREATED).body(toDto(saved));
         }
 
-        // CSV režim
         try {
             var created = csvService.createFromDto(matchDto);
-            if (created == null || created.getPlayerA() == null || created.getPlayerB() == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Player(s) not found"));
+            if (created == null ||
+                    created.getPlayerA() == null ||
+                    created.getPlayerB() == null) {
+                return badRequest("Player(s) not found");
             }
+
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
+
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return badRequest(e.getMessage());
         } catch (Exception ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", "CSV operation failed"));
+            return badRequest("CSV operation failed");
         }
     }
 
     // -------------------- PUT podľa ID (JPA) --------------------
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateMatch(@PathVariable Long id, @RequestBody MatchUpdateDto dto) {
+    public ResponseEntity<?> updateMatch(@PathVariable Long id,
+                                         @RequestBody MatchUpdateDto dto) {
+
         if (isJpaActive()) {
             try {
                 Match updated = jpaService.update(id, dto);
                 return ResponseEntity.ok(updated);
             } catch (RuntimeException e) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Match not found"));
+                return badRequest("Match not found");
             }
         }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Update by ID not supported in CSV mode"));
+        return badRequest("Update by ID not supported in CSV mode");
     }
 
     // -------------------- DELETE podľa ID (JPA) --------------------
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMatchById(@PathVariable Long id) {
+    public ResponseEntity<?> deleteMatchById(@PathVariable Long id) {
+
         if (isJpaActive()) {
             try {
                 jpaService.deleteById(id);
                 return ResponseEntity.noContent().build();
             } catch (RuntimeException e) {
-                return ResponseEntity.badRequest().build();
+                return badRequest("Match not found");
             }
         }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .header("error", "Delete by ID not supported in CSV mode")
-                .build();
+        return badRequest("Delete by ID not supported in CSV mode");
     }
 }
