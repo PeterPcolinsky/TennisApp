@@ -20,6 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * REST controller responsible for managing tennis matches.
+ *
+ * Supports two modes:
+ * - CSV mode (default)
+ * - JPA mode (when "mysql" profile is active)
+ */
 @RestController
 @RequestMapping("/api/matches")
 public class MatchController {
@@ -36,11 +43,17 @@ public class MatchController {
         this.env = env;
     }
 
+    /**
+     * Checks if MySQL (JPA) profile is active.
+     */
     private boolean isJpaActive() {
         return Arrays.stream(env.getActiveProfiles())
                 .anyMatch(p -> p.equalsIgnoreCase("mysql"));
     }
 
+    /**
+     * Converts JPA entity to response DTO.
+     */
     private MatchResponseDto toDto(MatchEntity e) {
         return new MatchResponseDto(
                 e.getId(),
@@ -51,11 +64,19 @@ public class MatchController {
         );
     }
 
+    /**
+     * Creates a standard BAD REQUEST response with an "error" message.
+     */
     private ResponseEntity<Map<String, String>> badRequest(String message) {
         return ResponseEntity.badRequest().body(Map.of("error", message));
     }
 
     // -------------------- GET ALL --------------------
+
+    /**
+     * Returns all matches.
+     * In JPA mode returns MatchResponseDto list, in CSV mode returns CSV matches.
+     */
     @GetMapping
     public ResponseEntity<?> getAllMatches() {
         if (isJpaActive()) {
@@ -69,6 +90,11 @@ public class MatchController {
     }
 
     // -------------------- POST --------------------
+
+    /**
+     * Creates a new match.
+     * Validates input DTO and returns CREATED on success.
+     */
     @PostMapping
     public ResponseEntity<?> createMatch(@RequestBody @Valid MatchDto matchDto) {
         if (isJpaActive()) {
@@ -110,6 +136,11 @@ public class MatchController {
     }
 
     // -------------------- PUT podľa ID (JPA) --------------------
+
+    /**
+     * Updates a match by ID.
+     * Supported only in JPA (mysql) mode.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMatch(@PathVariable Long id,
                                          @RequestBody MatchUpdateDto dto) {
@@ -127,6 +158,11 @@ public class MatchController {
     }
 
     // -------------------- DELETE podľa ID (JPA) --------------------
+
+    /**
+     * Deletes a match by ID.
+     * Supported only in JPA (mysql) mode.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteMatchById(@PathVariable Long id) {
 

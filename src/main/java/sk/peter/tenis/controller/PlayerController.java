@@ -14,7 +14,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Controller pre správu hráčov (CSV + JPA režim).
+ * REST controller for managing players.
+ *
+ * Supports CSV mode and JPA mode (when "h2" or "mysql" profile is active).
  */
 @RestController
 @RequestMapping("/api/players")
@@ -32,12 +34,19 @@ public class PlayerController {
         this.env = env;
     }
 
+    /**
+     * Checks if JPA profile is active (H2 or MySQL).
+     */
     private boolean isJpaActive() {
-        return Arrays.stream(env.getActiveProfiles()).anyMatch(p -> p.equalsIgnoreCase("h2") || p.equalsIgnoreCase("mysql"));
+        return Arrays.stream(env.getActiveProfiles())
+                .anyMatch(p -> p.equalsIgnoreCase("h2") || p.equalsIgnoreCase("mysql"));
     }
 
     // ---------------- CRUD ----------------
 
+    /**
+     * Returns all players.
+     */
     @GetMapping
     public List<?> getAllPlayers() {
         if (isJpaActive()) {
@@ -46,6 +55,9 @@ public class PlayerController {
         return csvService.findAll();
     }
 
+    /**
+     * Returns player by ID (JPA) or by name lookup (CSV fallback).
+     */
     @GetMapping("/{id}")
     public Object getPlayer(@PathVariable Long id) {
         if (isJpaActive()) {
@@ -57,6 +69,9 @@ public class PlayerController {
                 .orElse(null);
     }
 
+    /**
+     * Creates a new player and returns CREATED on success.
+     */
     @PostMapping
     public ResponseEntity<Object> createPlayer(@RequestBody @Valid PlayerDto playerDto) {
         Object savedPlayer;
@@ -87,10 +102,12 @@ public class PlayerController {
             savedPlayer = csvService.createFromDto(playerDto);
         }
 
-        // ✅ REST štandard: 201 CREATED
         return ResponseEntity.status(HttpStatus.CREATED).body(savedPlayer);
     }
 
+    /**
+     * Updates a player by name.
+     */
     @PutMapping("/{name}")
     public ResponseEntity<?> updatePlayer(@PathVariable String name, @RequestBody PlayerDto dto) {
         if (isJpaActive()) {
@@ -102,10 +119,12 @@ public class PlayerController {
         }
     }
 
+    /**
+     * Deletes a player by name.
+     */
     @DeleteMapping("/{name}")
     public ResponseEntity<Void> deletePlayer(@PathVariable String name) {
         if (isJpaActive()) {
-            // JPA režim – mazanie podľa mena
             jpaService.findAll().stream()
                     .filter(p -> p.getName().equalsIgnoreCase(name))
                     .findFirst()
@@ -114,7 +133,6 @@ public class PlayerController {
             csvService.delete(name);
         }
 
-        // ✅ REST štandard: 204 – No Content
         return ResponseEntity.noContent().build();
     }
 }

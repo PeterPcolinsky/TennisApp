@@ -18,6 +18,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * REST controller for statistics and leaderboard endpoints.
+ *
+ * Provides endpoints for:
+ * - leaderboard
+ * - top players
+ * - export leaderboard as CSV
+ * - player stats for a selected date range
+ */
 @RestController
 @RequestMapping("/api/stats")
 public class StatsController {
@@ -28,11 +37,19 @@ public class StatsController {
         this.statsService = statsService;
     }
 
+    /**
+     * Returns full leaderboard.
+     */
     @GetMapping("/leaderboard")
     public List<LeaderboardDto> leaderboard() {
         return statsService.getLeaderboard();
     }
 
+    /**
+     * Returns top players by win rate.
+     *
+     * @param limit maximum number of players (default 3)
+     */
     @GetMapping("/top")
     public List<LeaderboardDto> getTopPlayers(@RequestParam(defaultValue = "3") int limit) {
         return statsService.getLeaderboard().stream()
@@ -42,6 +59,11 @@ public class StatsController {
                 .toList();
     }
 
+    /**
+     * Exports the leaderboard as CSV file.
+     *
+     * @return CSV file content as bytes with download headers
+     */
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportCsv() {
         StringBuilder sb = new StringBuilder();
@@ -62,6 +84,13 @@ public class StatsController {
         return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }
 
+    /**
+     * Returns player statistics with optional date range.
+     *
+     * @param name player name
+     * @param from start date (yyyy-MM-dd), optional
+     * @param to end date (yyyy-MM-dd), optional
+     */
     @GetMapping("/player")
     public PlayerStatsDto getPlayerStats(
             @RequestParam String name,
