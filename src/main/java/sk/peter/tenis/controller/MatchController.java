@@ -143,7 +143,7 @@ public class MatchController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMatch(@PathVariable Long id,
-                                         @RequestBody MatchUpdateDto dto) {
+                                         @RequestBody @Valid MatchUpdateDto dto) {
 
         if (isJpaActive()) {
             try {
