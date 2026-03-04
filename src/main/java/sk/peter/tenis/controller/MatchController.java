@@ -18,7 +18,6 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * REST controller responsible for managing tennis matches.
@@ -83,7 +82,7 @@ public class MatchController {
             List<MatchResponseDto> out = jpaService.findAll()
                     .stream()
                     .map(this::toDto)
-                    .collect(Collectors.toList());
+                    .toList();
             return ResponseEntity.ok(out);
         }
         return ResponseEntity.ok(csvService.findAll());
