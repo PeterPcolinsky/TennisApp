@@ -31,10 +31,16 @@ import java.util.Locale;
 @RequestMapping("/api/stats")
 public class StatsController {
 
+    private static final String CSV_HEADER = "Meno;Zapasy;Vyhry;Prehry;WinRate(%)\n";
+
     private final StatsService statsService;
 
     public StatsController(StatsService statsService) {
         this.statsService = statsService;
+    }
+
+    private List<LeaderboardDto> getLeaderboard() {
+        return statsService.getLeaderboard();
     }
 
     /**
@@ -42,7 +48,7 @@ public class StatsController {
      */
     @GetMapping("/leaderboard")
     public List<LeaderboardDto> leaderboard() {
-        return statsService.getLeaderboard();
+        return getLeaderboard();
     }
 
     /**
@@ -52,7 +58,7 @@ public class StatsController {
      */
     @GetMapping("/top")
     public List<LeaderboardDto> getTopPlayers(@RequestParam(defaultValue = "3") int limit) {
-        return statsService.getLeaderboard().stream()
+        return getLeaderboard().stream()
                 .filter(p -> p.getMatches() > 0 && p.getWinRatePercent() > 0)
                 .sorted(Comparator.comparingDouble(LeaderboardDto::getWinRatePercent).reversed())
                 .limit(limit)
@@ -67,8 +73,9 @@ public class StatsController {
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportCsv() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Meno;Zapasy;Vyhry;Prehry;WinRate(%)\n");
-        for (LeaderboardDto row : statsService.getLeaderboard()) {
+        sb.append(CSV_HEADER);
+
+        for (LeaderboardDto row : getLeaderboard()) {
             sb.append(row.getName()).append(";")
                     .append(row.getMatches()).append(";")
                     .append(row.getWins()).append(";")
@@ -78,9 +85,11 @@ public class StatsController {
         }
 
         byte[] bytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
         headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=leaderboard.csv");
+
         return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }
 
