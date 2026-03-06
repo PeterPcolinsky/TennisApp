@@ -33,6 +33,9 @@ public class StatsController {
 
     private static final String CSV_HEADER = "Meno;Zapasy;Vyhry;Prehry;WinRate(%)\n";
 
+    private static final Comparator<LeaderboardDto> WIN_RATE_DESC =
+            Comparator.comparingDouble(LeaderboardDto::getWinRatePercent).reversed();
+
     private final StatsService statsService;
 
     public StatsController(StatsService statsService) {
@@ -53,22 +56,18 @@ public class StatsController {
 
     /**
      * Returns top players by win rate.
-     *
-     * @param limit maximum number of players (default 3)
      */
     @GetMapping("/top")
     public List<LeaderboardDto> getTopPlayers(@RequestParam(defaultValue = "3") int limit) {
         return getLeaderboard().stream()
                 .filter(p -> p.getMatches() > 0 && p.getWinRatePercent() > 0)
-                .sorted(Comparator.comparingDouble(LeaderboardDto::getWinRatePercent).reversed())
+                .sorted(WIN_RATE_DESC)
                 .limit(limit)
                 .toList();
     }
 
     /**
      * Exports the leaderboard as CSV file.
-     *
-     * @return CSV file content as bytes with download headers
      */
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportCsv() {
@@ -95,10 +94,6 @@ public class StatsController {
 
     /**
      * Returns player statistics with optional date range.
-     *
-     * @param name player name
-     * @param from start date (yyyy-MM-dd), optional
-     * @param to end date (yyyy-MM-dd), optional
      */
     @GetMapping("/player")
     public PlayerStatsDto getPlayerStats(
