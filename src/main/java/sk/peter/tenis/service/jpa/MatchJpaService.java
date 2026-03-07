@@ -3,10 +3,10 @@ package sk.peter.tenis.service.jpa;
 import jakarta.transaction.Transactional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import sk.peter.tenis.dto.MatchDto;
 import sk.peter.tenis.dto.MatchUpdateDto;
 import sk.peter.tenis.entity.MatchEntity;
 import sk.peter.tenis.model.Match;
-import sk.peter.tenis.model.Player;
 import sk.peter.tenis.repository.MatchRepository;
 import sk.peter.tenis.repository.PlayerRepository;
 
@@ -26,22 +26,37 @@ public class MatchJpaService {
         this.playerRepository = playerRepository;
     }
 
-    // ---------- CREATE ----------
+    // ---------- CREATE (DTO - používa controller) ----------
     @Transactional
-    public MatchEntity save(Match match) {
-        Player playerA = match.getPlayerA();
-        Player playerB = match.getPlayerB();
+    public MatchEntity save(MatchDto dto) {
 
-        // Skús nájsť hráčov podľa mena
-        var playerAEntity = playerRepository.findByNameIgnoreCase(playerA.getName());
-        var playerBEntity = playerRepository.findByNameIgnoreCase(playerB.getName());
+        var playerAEntity = playerRepository.findByNameIgnoreCase(dto.getPlayerA());
+        var playerBEntity = playerRepository.findByNameIgnoreCase(dto.getPlayerB());
 
-        // Ak niektorý hráč chýba -> vráť null (test očakáva 400 pre chýbajúceho hráča)
         if (playerAEntity.isEmpty() || playerBEntity.isEmpty()) {
             return null;
         }
 
-        // Vytvor zápas
+        MatchEntity entity = new MatchEntity();
+        entity.setPlayerA(playerAEntity.get());
+        entity.setPlayerB(playerBEntity.get());
+        entity.setResult(dto.getScore());
+        entity.setDate(LocalDate.parse(dto.getDate()));
+
+        return matchRepository.save(entity);
+    }
+
+    // ---------- CREATE (Match - používa DataSeeder) ----------
+    @Transactional
+    public MatchEntity save(Match match) {
+
+        var playerAEntity = playerRepository.findByNameIgnoreCase(match.getPlayerA().getName());
+        var playerBEntity = playerRepository.findByNameIgnoreCase(match.getPlayerB().getName());
+
+        if (playerAEntity.isEmpty() || playerBEntity.isEmpty()) {
+            return null;
+        }
+
         MatchEntity entity = new MatchEntity();
         entity.setPlayerA(playerAEntity.get());
         entity.setPlayerB(playerBEntity.get());
@@ -53,7 +68,8 @@ public class MatchJpaService {
 
     // ---------- UPDATE ----------
     @Transactional
-    public Match update(Long id, MatchUpdateDto dto) {
+    public MatchEntity update(Long id, MatchUpdateDto dto) {
+
         var existing = matchRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Match not found"));
 
@@ -68,21 +84,16 @@ public class MatchJpaService {
         existing.setResult(newScore);
         existing.setDate(newDate);
 
-        var saved = matchRepository.save(existing);
-
-        return new Match(
-                new Player(saved.getPlayerA().getName(), 0, null),
-                new Player(saved.getPlayerB().getName(), 0, null),
-                saved.getResult(),
-                saved.getDate()
-        );
+        return matchRepository.save(existing);
     }
 
     // ---------- DELETE ----------
     public void deleteById(Long id) {
+
         if (!matchRepository.existsById(id)) {
             throw new RuntimeException("Match ID not found");
         }
+
         matchRepository.deleteById(id);
     }
 
@@ -91,7 +102,6 @@ public class MatchJpaService {
         return matchRepository.findAll();
     }
 
-    // ---------- EXISTS ----------
     public boolean existsById(Long id) {
         return matchRepository.existsById(id);
     }

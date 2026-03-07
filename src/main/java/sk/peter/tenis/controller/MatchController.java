@@ -9,12 +9,9 @@ import sk.peter.tenis.dto.MatchDto;
 import sk.peter.tenis.dto.MatchResponseDto;
 import sk.peter.tenis.dto.MatchUpdateDto;
 import sk.peter.tenis.entity.MatchEntity;
-import sk.peter.tenis.model.Match;
-import sk.peter.tenis.model.Player;
 import sk.peter.tenis.service.MatchService;
 import sk.peter.tenis.service.jpa.MatchJpaService;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -42,17 +39,11 @@ public class MatchController {
         this.env = env;
     }
 
-    /**
-     * Checks if MySQL (JPA) profile is active.
-     */
     private boolean isJpaActive() {
         return Arrays.stream(env.getActiveProfiles())
                 .anyMatch(p -> p.equalsIgnoreCase("mysql"));
     }
 
-    /**
-     * Converts JPA entity to response DTO.
-     */
     private MatchResponseDto toDto(MatchEntity e) {
         return new MatchResponseDto(
                 e.getId(),
@@ -63,19 +54,10 @@ public class MatchController {
         );
     }
 
-    /**
-     * Creates a standard BAD REQUEST response with an "error" message.
-     */
     private ResponseEntity<Map<String, String>> badRequest(String message) {
         return ResponseEntity.badRequest().body(Map.of("error", message));
     }
 
-    // -------------------- GET ALL --------------------
-
-    /**
-     * Returns all matches.
-     * In JPA mode returns MatchResponseDto list, in CSV mode returns CSV matches.
-     */
     @GetMapping
     public ResponseEntity<?> getAllMatches() {
         if (isJpaActive()) {
@@ -88,44 +70,36 @@ public class MatchController {
         return ResponseEntity.ok(csvService.findAll());
     }
 
-    // -------------------- POST --------------------
-
-    /**
-     * Creates a new match.
-     * Validates input DTO and returns CREATED on success.
-     */
     @PostMapping
     public ResponseEntity<?> createMatch(@RequestBody @Valid MatchDto matchDto) {
+
         if (isJpaActive()) {
 
             csvService.validateMatchBusinessRules(matchDto);
 
-            Player playerA = new Player(matchDto.getPlayerA(), 0, null);
-            Player playerB = new Player(matchDto.getPlayerB(), 0, null);
-            Match match = new Match(
-                    playerA,
-                    playerB,
-                    matchDto.getScore(),
-                    LocalDate.parse(matchDto.getDate())
-            );
+            MatchEntity saved = jpaService.save(matchDto);
 
-            var saved = jpaService.save(match);
             if (saved == null) {
                 return badRequest("Player(s) not found");
             }
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(toDto(saved));
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(toDto(saved));
         }
 
         try {
             var created = csvService.createFromDto(matchDto);
+
             if (created == null ||
                     created.getPlayerA() == null ||
                     created.getPlayerB() == null) {
                 return badRequest("Player(s) not found");
             }
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(created);
 
         } catch (IllegalArgumentException e) {
             return badRequest(e.getMessage());
@@ -134,20 +108,14 @@ public class MatchController {
         }
     }
 
-    // -------------------- PUT podľa ID (JPA) --------------------
-
-    /**
-     * Updates a match by ID.
-     * Supported only in JPA (mysql) mode.
-     */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMatch(@PathVariable Long id,
                                          @RequestBody @Valid MatchUpdateDto dto) {
 
         if (isJpaActive()) {
             try {
-                Match updated = jpaService.update(id, dto);
-                return ResponseEntity.ok(updated);
+                MatchEntity updated = jpaService.update(id, dto);
+                return ResponseEntity.ok(toDto(updated));
             } catch (RuntimeException e) {
                 return badRequest("Match not found");
             }
@@ -156,12 +124,6 @@ public class MatchController {
         return badRequest("Update by ID not supported in CSV mode");
     }
 
-    // -------------------- DELETE podľa ID (JPA) --------------------
-
-    /**
-     * Deletes a match by ID.
-     * Supported only in JPA (mysql) mode.
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteMatchById(@PathVariable Long id) {
 
