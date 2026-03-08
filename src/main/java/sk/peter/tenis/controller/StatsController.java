@@ -46,6 +46,10 @@ public class StatsController {
         return statsService.getLeaderboard();
     }
 
+    private LocalDate parseDate(String value) {
+        return (value != null && !value.isBlank()) ? LocalDate.parse(value) : null;
+    }
+
     /**
      * Returns full leaderboard.
      */
@@ -101,8 +105,8 @@ public class StatsController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
 
-        LocalDate fromDate = (from != null && !from.isBlank()) ? LocalDate.parse(from) : null;
-        LocalDate toDate = (to != null && !to.isBlank()) ? LocalDate.parse(to) : null;
+        LocalDate fromDate = parseDate(from);
+        LocalDate toDate = parseDate(to);
 
         return statsService.getPlayerStats(name, fromDate, toDate);
     }
