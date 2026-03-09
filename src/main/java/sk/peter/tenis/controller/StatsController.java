@@ -63,6 +63,9 @@ public class StatsController {
      */
     @GetMapping("/top")
     public List<LeaderboardDto> getTopPlayers(@RequestParam(defaultValue = "3") int limit) {
+
+        limit = Math.min(limit, 50);
+
         return getLeaderboard().stream()
                 .filter(p -> p.getMatches() > 0 && p.getWinRatePercent() > 0)
                 .sorted(WIN_RATE_DESC)
