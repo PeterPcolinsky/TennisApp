@@ -78,7 +78,7 @@ public class StatsController {
      */
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportCsv() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(256);
         sb.append(CSV_HEADER);
 
         for (LeaderboardDto row : getLeaderboard()) {
