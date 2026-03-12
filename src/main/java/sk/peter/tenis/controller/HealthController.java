@@ -12,13 +12,17 @@ import java.util.Map;
 @RestController
 public class HealthController {
 
+
     /**
      * Returns basic health status of the application.
      *
      * @return "OK" if the application is running
      */
+
+    private static final String STATUS = "OK";
+
     @GetMapping("/api/health")
     public Map<String, String> health() {
-        return Map.of("status", "OK");
+        return Map.of("status", STATUS);
     }
 }
