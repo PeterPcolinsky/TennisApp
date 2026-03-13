@@ -12,7 +12,6 @@ import java.util.Map;
 @RestController
 public class HealthController {
 
-
     /**
      * Returns basic health status of the application.
      *
@@ -21,7 +20,7 @@ public class HealthController {
 
     private static final String STATUS = "OK";
 
-    @GetMapping("/api/health")
+    @GetMapping(value = "/api/health", produces = "application/json")
     public Map<String, String> health() {
         return Map.of("status", STATUS);
     }
