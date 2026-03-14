@@ -2,6 +2,7 @@ package sk.peter.tenis.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.Map;
 
 /**
@@ -10,6 +11,7 @@ import java.util.Map;
  * Used to verify that the application is running and reachable.
  */
 @RestController
+@RequestMapping("/api")
 public class HealthController {
 
     /**
@@ -20,7 +22,7 @@ public class HealthController {
 
     private static final String STATUS = "OK";
 
-    @GetMapping(value = "/api/health", produces = "application/json")
+    @GetMapping(value = "/health", produces = "application/json")
     public Map<String, String> health() {
         return Map.of("status", STATUS);
     }
