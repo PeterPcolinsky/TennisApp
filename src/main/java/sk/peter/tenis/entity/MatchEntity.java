@@ -26,7 +26,7 @@ public class MatchEntity {
     @JoinColumn(name = "player_b_id", nullable = false)
     private PlayerEntity playerB;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20 )
     private String result;       // napr. "6:4, 6:2"
 
     @Column(nullable = false)
