@@ -2,6 +2,7 @@ package sk.peter.tenis.entity;
 
 import jakarta.persistence.*;
 import sk.peter.tenis.model.PlayerType;
+import java.io.Serializable;
 
 /**
  * JPA entity representing a tennis player stored in the database.
@@ -11,7 +12,9 @@ import sk.peter.tenis.model.PlayerType;
  */
 @Entity
 @Table(name = "players")
-public class PlayerEntity {
+public class PlayerEntity implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
