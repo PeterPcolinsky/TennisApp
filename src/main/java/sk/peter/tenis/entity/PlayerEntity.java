@@ -3,6 +3,8 @@ package sk.peter.tenis.entity;
 import jakarta.persistence.*;
 import sk.peter.tenis.model.PlayerType;
 import java.io.Serializable;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * JPA entity representing a tennis player stored in the database.
@@ -20,12 +22,15 @@ public class PlayerEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
+    @Size(min = 2, max = 100)
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
     @Column
     private int age;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PlayerType type;
