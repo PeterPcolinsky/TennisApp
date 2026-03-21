@@ -13,7 +13,12 @@ import jakarta.validation.constraints.Size;
  * such as name, age and type.
  */
 @Entity
-@Table(name = "players")
+@Table(
+        name = "players",
+        indexes = {
+                @Index(name = "idx_player_name", columnList = "name")
+        }
+)
 public class PlayerEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -27,7 +32,7 @@ public class PlayerEntity implements Serializable {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
-    @Column
+    @Column(nullable = false)
     private int age;
 
     @NotNull
@@ -48,10 +53,6 @@ public class PlayerEntity implements Serializable {
     // --- Getters & Setters ---
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -89,7 +90,6 @@ public class PlayerEntity implements Serializable {
     }
 
     // --- equals & hashCode (JPA best practice) ---
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
