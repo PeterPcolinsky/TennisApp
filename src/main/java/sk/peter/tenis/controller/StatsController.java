@@ -32,6 +32,8 @@ import java.util.Locale;
 public class StatsController {
 
     private static final String CSV_HEADER = "Meno;Zapasy;Vyhry;Prehry;WinRate(%)\n";
+    private static final String DEFAULT_TOP_LIMIT = "3";
+    private static final int MAX_TOP_LIMIT = 50;
 
     private static final Comparator<LeaderboardDto> WIN_RATE_DESC =
             Comparator.comparingDouble(LeaderboardDto::getWinRatePercent).reversed();
@@ -62,9 +64,9 @@ public class StatsController {
      * Returns top players by win rate.
      */
     @GetMapping("/top")
-    public List<LeaderboardDto> getTopPlayers(@RequestParam(defaultValue = "3") int limit) {
+    public List<LeaderboardDto> getTopPlayers(@RequestParam(defaultValue = DEFAULT_TOP_LIMIT) int limit) {
 
-        limit = Math.min(limit, 50);
+        limit = Math.min(limit, MAX_TOP_LIMIT);
 
         return getLeaderboard().stream()
                 .filter(p -> p.getMatches() > 0 && p.getWinRatePercent() > 0)
