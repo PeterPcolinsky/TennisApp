@@ -106,9 +106,9 @@ public class StatsController {
      */
     @GetMapping("/player")
     public PlayerStatsDto getPlayerStats(
-            @RequestParam String name,
-            @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
+            @RequestParam final String name,
+            @RequestParam(required = false) final String from,
+            @RequestParam(required = false) final String to) {
 
         LocalDate fromDate = parseDate(from);
         LocalDate toDate = parseDate(to);
