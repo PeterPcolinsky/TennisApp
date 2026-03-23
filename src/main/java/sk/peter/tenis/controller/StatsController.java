@@ -1,5 +1,4 @@
 package sk.peter.tenis.controller;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,7 +19,6 @@ import java.util.Locale;
 
 /**
  * REST controller for statistics and leaderboard endpoints.
- *
  * Provides endpoints for:
  * - leaderboard
  * - top players
