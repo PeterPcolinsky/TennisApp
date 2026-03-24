@@ -13,6 +13,12 @@ import sk.peter.tenis.repository.PlayerRepository;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * JPA service for tennis match management.
+ *
+ * <p>This service provides create, update, delete and read operations
+ * for matches stored in the database.</p>
+ */
 @Service
 @Profile({"h2", "mysql"})
 public class MatchJpaService {
@@ -20,6 +26,12 @@ public class MatchJpaService {
     private final MatchRepository matchRepository;
     private final PlayerRepository playerRepository;
 
+    /**
+     * Creates a new match service using JPA repositories.
+     *
+     * @param matchRepository repository for match entities
+     * @param playerRepository repository for player entities
+     */
     public MatchJpaService(MatchRepository matchRepository,
                            PlayerRepository playerRepository) {
         this.matchRepository = matchRepository;
@@ -27,6 +39,16 @@ public class MatchJpaService {
     }
 
     // ---------- CREATE (DTO - používa controller) ----------
+
+    /**
+     * Saves a new match from controller DTO input.
+     *
+     * <p>If one of the referenced players does not exist,
+     * the method returns {@code null}.</p>
+     *
+     * @param dto match DTO from request
+     * @return saved match entity, or {@code null} if players were not found
+     */
     @Transactional
     public MatchEntity save(MatchDto dto) {
 
@@ -47,6 +69,15 @@ public class MatchJpaService {
     }
 
     // ---------- CREATE (Match - používa DataSeeder) ----------
+
+    /**
+     * Saves a new match from domain model input.
+     *
+     * <p>This overload is mainly used by seeders when importing data.</p>
+     *
+     * @param match match domain object
+     * @return saved match entity, or {@code null} if players were not found
+     */
     @Transactional
     public MatchEntity save(Match match) {
 
@@ -67,6 +98,17 @@ public class MatchJpaService {
     }
 
     // ---------- UPDATE ----------
+
+    /**
+     * Updates an existing match by its ID.
+     *
+     * <p>If a new score or date is not provided, the existing value is kept.</p>
+     *
+     * @param id match ID
+     * @param dto DTO containing updated match values
+     * @return updated match entity
+     * @throws RuntimeException if the match does not exist
+     */
     @Transactional
     public MatchEntity update(Long id, MatchUpdateDto dto) {
 
@@ -88,6 +130,13 @@ public class MatchJpaService {
     }
 
     // ---------- DELETE ----------
+
+    /**
+     * Deletes a match by its ID.
+     *
+     * @param id match ID
+     * @throws RuntimeException if the match ID does not exist
+     */
     public void deleteById(Long id) {
 
         if (!matchRepository.existsById(id)) {
@@ -98,14 +147,31 @@ public class MatchJpaService {
     }
 
     // ---------- FIND ALL ----------
+
+    /**
+     * Returns all stored matches.
+     *
+     * @return list of all match entities
+     */
     public List<MatchEntity> findAll() {
         return matchRepository.findAll();
     }
 
+    /**
+     * Checks whether a match with the given ID exists.
+     *
+     * @param id match ID
+     * @return {@code true} if the match exists, otherwise {@code false}
+     */
     public boolean existsById(Long id) {
         return matchRepository.existsById(id);
     }
 
+    /**
+     * Returns the total number of stored matches.
+     *
+     * @return number of matches
+     */
     public long count() {
         return matchRepository.count();
     }

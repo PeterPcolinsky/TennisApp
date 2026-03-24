@@ -13,9 +13,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * JPA implementation of statistics service.
  *
- * JPA verzia štatistík – používa sa iba v profile "h2".
- * API (DTO) rovnaké.
+ * <p>This service is active only for database profiles and provides
+ * player statistics, leaderboard calculation and CSV export based
+ * on data stored in the database.</p>
  */
 @Service
 @Profile({"h2", "mysql"})
@@ -24,6 +26,12 @@ public class StatsJpaService {
     private final MatchRepository matchRepo;
     private final PlayerRepository playerRepo;
 
+    /**
+     * Creates a new statistics service using JPA repositories.
+     *
+     * @param matchRepo repository for tennis matches
+     * @param playerRepo repository for players
+     */
     public StatsJpaService(MatchRepository matchRepo, PlayerRepository playerRepo) {
         this.matchRepo = matchRepo;
         this.playerRepo = playerRepo;
@@ -31,6 +39,17 @@ public class StatsJpaService {
 
     // ------------------- Public API -------------------
 
+    /**
+     * Returns statistics for one player within an optional date range.
+     *
+     * <p>The method calculates wins, losses, total finished matches
+     * and win rate percentage for the selected player.</p>
+     *
+     * @param name player name
+     * @param from start date filter, or {@code null} if not used
+     * @param to end date filter, or {@code null} if not used
+     * @return player statistics DTO
+     */
     public PlayerStatsDto getPlayerStats(String name, LocalDate from, LocalDate to) {
         String n = name == null ? null : name.trim();
         List<MatchEntity> matches = matchRepo.search(n, from, to);
@@ -61,11 +80,19 @@ public class StatsJpaService {
         return dto;
     }
 
+    /**
+     * Builds the leaderboard for all players from stored matches.
+     *
+     * <p>The leaderboard is sorted by win rate descending,
+     * then by number of matches descending,
+     * and finally by player name.</p>
+     *
+     * @return sorted list of leaderboard rows
+     */
     public List<LeaderboardDto> getLeaderboard() {
-        // Všetky zápasy – spočítame štatistiky pre každého hráča
         List<MatchEntity> all = matchRepo.findAll();
 
-        Map<String, int[]> map = new HashMap<>(); // name -> [wins, losses]
+        Map<String, int[]> map = new HashMap<>();
 
         for (MatchEntity m : all) {
             String a = m.getPlayerA().getName();
@@ -77,8 +104,8 @@ public class StatsJpaService {
 
             if (w == null) continue;
             if (w.equalsIgnoreCase(a)) {
-                map.get(a)[0]++; // a wins
-                map.get(b)[1]++; // b loses
+                map.get(a)[0]++;
+                map.get(b)[1]++;
             } else if (w.equalsIgnoreCase(b)) {
                 map.get(b)[0]++;
                 map.get(a)[1]++;
@@ -97,7 +124,6 @@ public class StatsJpaService {
             list.add(row);
         }
 
-        // zoradené podľa winRate, potom podľa počtu zápasov
         return list.stream()
                 .sorted(Comparator
                         .comparing(LeaderboardDto::getWinRatePercent).reversed()
@@ -106,6 +132,11 @@ public class StatsJpaService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Exports the current leaderboard to CSV format.
+     *
+     * @return leaderboard content as CSV string
+     */
     public String exportLeaderboardCsv() {
         List<LeaderboardDto> lb = getLeaderboard();
         StringBuilder sb = new StringBuilder();
@@ -123,7 +154,15 @@ public class StatsJpaService {
 
     // ------------------- Helpers -------------------
 
-    // robustné určenie víťaza zo stringu "6:4, 6:2" atď.
+    /**
+     * Determines the winner of a match from the score string.
+     *
+     * <p>Expected formats are for example {@code "6:4, 6:2"}.
+     * If the result is invalid or tied, the method returns {@code null}.</p>
+     *
+     * @param m match entity
+     * @return winner name, or {@code null} if winner cannot be determined
+     */
     private String winnerName(MatchEntity m) {
         int setsA = 0, setsB = 0;
         String res = m.getResult();
@@ -145,6 +184,12 @@ public class StatsJpaService {
         return setsA > setsB ? m.getPlayerA().getName() : m.getPlayerB().getName();
     }
 
+    /**
+     * Rounds a decimal number to one decimal place.
+     *
+     * @param v value to round
+     * @return rounded value
+     */
     private double round1(double v) {
         return Math.round(v * 10.0) / 10.0;
     }
