@@ -44,10 +44,11 @@ public class MatchJpaService {
      * Saves a new match from controller DTO input.
      *
      * <p>If one of the referenced players does not exist,
-     * the method returns {@code null}.</p>
+     * the method throws an {@link IllegalArgumentException}.</p>
      *
      * @param dto match DTO from request
-     * @return saved match entity, or {@code null} if players were not found
+     * @return saved match entity
+     * @throws IllegalArgumentException if one or both players were not found
      */
     @Transactional
     public MatchEntity save(MatchDto dto) {
@@ -56,7 +57,7 @@ public class MatchJpaService {
         var playerBEntity = playerRepository.findByNameIgnoreCase(dto.getPlayerB());
 
         if (playerAEntity.isEmpty() || playerBEntity.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException("One or both players not found");
         }
 
         MatchEntity entity = new MatchEntity();
@@ -76,7 +77,8 @@ public class MatchJpaService {
      * <p>This overload is mainly used by seeders when importing data.</p>
      *
      * @param match match domain object
-     * @return saved match entity, or {@code null} if players were not found
+     * @return saved match entity
+     * @throws IllegalArgumentException if one or both players were not found
      */
     @Transactional
     public MatchEntity save(Match match) {
@@ -85,7 +87,7 @@ public class MatchJpaService {
         var playerBEntity = playerRepository.findByNameIgnoreCase(match.getPlayerB().getName());
 
         if (playerAEntity.isEmpty() || playerBEntity.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException("One or both players not found");
         }
 
         MatchEntity entity = new MatchEntity();
