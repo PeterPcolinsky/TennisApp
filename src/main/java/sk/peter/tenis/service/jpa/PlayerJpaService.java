@@ -37,13 +37,18 @@ public class PlayerJpaService {
     /**
      * Saves a new player into the database.
      *
-     * <p>Before saving, the method checks whether a player with the same
-     * name already exists, ignoring letter case.</p>
+     * <p>Before saving, the method checks whether the input player is not {@code null}
+     * and whether a player with the same name already exists, ignoring letter case.</p>
      *
      * @param player player domain object to save
-     * @throws IllegalArgumentException if player with the same name already exists
+     * @throws IllegalArgumentException if player is {@code null}
+     *                                  or if player with the same name already exists
      */
     public void save(Player player) {
+        if (player == null) {
+            throw new IllegalArgumentException("Player cannot be null");
+        }
+
         boolean exists = playerRepository.existsByNameIgnoreCase(player.getName());
         if (exists) {
             throw new IllegalArgumentException(
