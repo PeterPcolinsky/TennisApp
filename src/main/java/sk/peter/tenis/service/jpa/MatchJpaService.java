@@ -43,15 +43,20 @@ public class MatchJpaService {
     /**
      * Saves a new match from controller DTO input.
      *
-     * <p>If one of the referenced players does not exist,
+     * <p>The method first checks that the input DTO is not {@code null}.
+     * If one of the referenced players does not exist,
      * the method throws an {@link IllegalArgumentException}.</p>
      *
      * @param dto match DTO from request
      * @return saved match entity
-     * @throws IllegalArgumentException if one or both players were not found
+     * @throws IllegalArgumentException if match DTO is {@code null}
+     *                                  or if one or both players were not found
      */
     @Transactional
     public MatchEntity save(MatchDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Match DTO cannot be null");
+        }
 
         var playerAEntity = playerRepository.findByNameIgnoreCase(dto.getPlayerA());
         var playerBEntity = playerRepository.findByNameIgnoreCase(dto.getPlayerB());
@@ -74,14 +79,19 @@ public class MatchJpaService {
     /**
      * Saves a new match from domain model input.
      *
-     * <p>This overload is mainly used by seeders when importing data.</p>
+     * <p>This overload is mainly used by seeders when importing data.
+     * The method first checks that the input match is not {@code null}.</p>
      *
      * @param match match domain object
      * @return saved match entity
-     * @throws IllegalArgumentException if one or both players were not found
+     * @throws IllegalArgumentException if match is {@code null}
+     *                                  or if one or both players were not found
      */
     @Transactional
     public MatchEntity save(Match match) {
+        if (match == null) {
+            throw new IllegalArgumentException("Match cannot be null");
+        }
 
         var playerAEntity = playerRepository.findByNameIgnoreCase(match.getPlayerA().getName());
         var playerBEntity = playerRepository.findByNameIgnoreCase(match.getPlayerB().getName());
