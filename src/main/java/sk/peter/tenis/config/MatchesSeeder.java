@@ -44,6 +44,14 @@ public class MatchesSeeder {
         this.playerRepository = playerRepository;
     }
 
+    /**
+     * Imports matches from CSV file into the database.
+     *
+     * <p>The import runs only once during application startup
+     * and only if the matches table is empty.</p>
+     *
+     * @throws IOException if the CSV file cannot be read
+     */
     @Transactional
     @PostConstruct
     public void seed() throws IOException {
