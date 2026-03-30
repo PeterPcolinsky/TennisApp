@@ -7,11 +7,11 @@ package sk.peter.tenis.dto;
  * including number of matches, wins, losses and win rate percentage.</p>
  */
 public class LeaderboardDto {
-    private String name;
-    private int matches;
-    private int wins;
-    private int losses;
-    private double winRatePercent;
+    private final String name;
+    private final int matches;
+    private final int wins;
+    private final int losses;
+    private final double winRatePercent;
 
     /**
      * Creates a leaderboard entry.
