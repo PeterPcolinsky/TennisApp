@@ -2,32 +2,40 @@ package sk.peter.tenis.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * Data Transfer Object representing player statistics.
+ *
+ * <p>Contains aggregated data about a player such as number of matches,
+ * wins, losses and win rate percentage.</p>
+ *
+ * <p>Null values are excluded from JSON response.</p>
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PlayerStatsDto {
 
     /**
-     * Meno hráča (napr. "Novak Djokovic")
+     * Player name (e.g. "Novak Djokovic")
      */
     private String name;
 
     /**
-     * Celkový počet odohraných zápasov
+     * Total number of matches played
      */
     private int matches;
 
     /**
-     * Počet výhier
+     * Number of wins
      */
     private int wins;
 
     /**
-     * Počet prehier
+     * Number of losses
      */
     private int losses;
 
     /**
-     * Percentuálna úspešnosť (0–100), zaokrúhlená v logike služby.
-     * Príklad: 66.7 pre 2/3 výhier.
+     * Win rate percentage (0–100), rounded in service logic.
+     * Example: 66.7 for 2/3 wins.
      */
     private double winRatePercent;
 
