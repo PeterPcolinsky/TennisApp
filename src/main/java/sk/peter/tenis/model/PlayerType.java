@@ -1,9 +1,8 @@
 package sk.peter.tenis.model;
 
 /**
- * Typ hráča (AMATÉR / PROFESIONÁL) vrátane mapovania z textového vstupu.
+ * Player type (AMATEUR / PROFESSIONAL) including mapping from user input.
  */
-
 public enum PlayerType {
     AMATER("Amatér"),
     PROFESIONAL("Profesionál");
@@ -14,17 +13,31 @@ public enum PlayerType {
         this.displayName = displayName;
     }
 
+    /**
+     * @return display name of the player type
+     */
     public String getDisplayName() {
         return displayName;
     }
 
-    // Pomocná metóda na načítanie podľa vstupu používateľa
+    /**
+     * Converts user input string to PlayerType.
+     *
+     * @param input user input (e.g. "amater", "amatér", "profesionál")
+     * @return corresponding PlayerType
+     * @throws IllegalArgumentException if input is invalid
+     */
     public static PlayerType fromInput(String input) {
+        if (input == null) {
+            throw new IllegalArgumentException("Player type cannot be null");
+        }
+
         String normalized = input.trim().toLowerCase();
+
         return switch (normalized) {
             case "amater", "amatér" -> AMATER;
             case "profesional", "profesionál" -> PROFESIONAL;
-            default -> null;
+            default -> throw new IllegalArgumentException("Unknown player type: " + input);
         };
     }
 }
