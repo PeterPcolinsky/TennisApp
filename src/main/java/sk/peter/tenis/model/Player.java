@@ -2,13 +2,23 @@ package sk.peter.tenis.model;
 
 import java.util.Objects;
 
+/**
+ * Represents a tennis player.
+ * <p>
+ * Contains basic information such as name, age and player type
+ * (amateur or professional).
+ */
 public class Player {
     private String name;
     private int age;
     private PlayerType type;
 
     /**
-     * Doménový objekt hráča: meno, vek a typ (amatér/profesionál).
+     * Creates a new player.
+     *
+     * @param name player's name (must not be null or blank)
+     * @param age  player's age (must be greater than 0)
+     * @param type player type (must not be null)
      */
     public Player(String name, int age, PlayerType type) {
         if (name == null || name.isBlank()) {
@@ -26,14 +36,23 @@ public class Player {
         this.type = type;
     }
 
+    /**
+     * @return player's name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * @return player's age
+     */
     public int getAge() {
         return age;
     }
 
+    /**
+     * @return player type (amateur/professional)
+     */
     public PlayerType getType() {
         return type;
     }

@@ -4,7 +4,9 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 /**
- * Tenisový zápas: hráč A, hráč B, textové skóre (sety) a dátum.
+ * Represents a tennis match between two players.
+ * <p>
+ * Contains players, match score (as text) and match date.
  */
 public class Match {
     private Player playerA;
@@ -12,6 +14,14 @@ public class Match {
     private String score;
     private LocalDate date;
 
+    /**
+     * Creates a new match.
+     *
+     * @param playerA first player
+     * @param playerB second player
+     * @param score   match result (e.g. "6:4, 6:3")
+     * @param date    date of the match
+     */
     public Match(Player playerA, Player playerB, String score, LocalDate date) {
         this.playerA = playerA;
         this.playerB = playerB;
@@ -19,18 +29,30 @@ public class Match {
         this.date = date;
     }
 
+    /**
+     * @return first player
+     */
     public Player getPlayerA() {
         return playerA;
     }
 
+    /**
+     * @return second player
+     */
     public Player getPlayerB() {
         return playerB;
     }
 
+    /**
+     * @return match score as text
+     */
     public String getScore() {
         return score;
     }
 
+    /**
+     * @return date of the match
+     */
     public LocalDate getDate() {
         return date;
     }
