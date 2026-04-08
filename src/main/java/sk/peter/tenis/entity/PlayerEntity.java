@@ -9,8 +9,17 @@ import jakarta.validation.constraints.Size;
 /**
  * JPA entity representing a tennis player stored in the database.
  *
- * Maps to the "players" table and contains basic player attributes
- * such as name, age and type.
+ * Maps to "players" table and is used in the persistence layer (JPA/Hibernate).
+ * Separate from the domain model (Player).
+ *
+ * Key features:
+ * - ID is auto-generated
+ * - Name is unique and indexed
+ * - Type is stored as enum string
+ *
+ * Validation:
+ * - Name: 2–100 characters, not null
+ * - Type: not null
  */
 @Entity
 @Table(
