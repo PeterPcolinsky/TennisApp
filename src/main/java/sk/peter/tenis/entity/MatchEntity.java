@@ -6,8 +6,20 @@ import java.time.LocalDate;
 /**
  * JPA entity representing a tennis match stored in the database.
  *
- * Maps to the "matches" table and contains references to two players,
- * match result and match date.
+ * Maps to "matches" table and is used in the persistence layer (JPA/Hibernate).
+ * Separate from the domain model (Match).
+ *
+ * Represents a match between two players with a result and date.
+ *
+ * Key features:
+ * - ID is auto-generated
+ * - References two players via ManyToOne relationships
+ * - Result is stored as a text (e.g. "6:4, 6:2")
+ * - Date is stored as LocalDate
+ *
+ * Constraints:
+ * - Both players must be present (not null)
+ * - Result and date must not be null
  */
 
 @Entity
