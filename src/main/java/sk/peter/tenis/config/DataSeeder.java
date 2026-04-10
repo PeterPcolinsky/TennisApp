@@ -16,8 +16,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Jednorazové nahratie hráčov z CSV do H2 databázy.
- * Spúšťa sa iba s profilom 'h2' a iba keď je tabuľka players prázdna.
+ * Data seeder for loading initial player data from CSV into the database.
+ *
+ * Active only under the "h2" profile and runs once on application startup.
+ * Seeding is performed only if the "players" table is empty.
+ *
+ * Reads player data from a CSV file defined in application properties.
+ * Expected format: name;age;type (e.g. "Peter;30;Amatér").
+ *
+ * Key behavior:
+ * - Skips invalid or malformed rows
+ * - Ignores duplicate players (case-insensitive by name)
+ * - Supports basic fallback parsing for player type
+ *
+ * Used only for development/testing with H2 database.
  */
 @Configuration
 @Profile("h2")
