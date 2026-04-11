@@ -95,9 +95,7 @@ public class StatsService {
         String lowerName = name.toLowerCase(Locale.ROOT);
 
         List<MatchEntity> playerMatches = allMatches.stream()
-                .filter(m ->
-                        m.getPlayerA().getName().equalsIgnoreCase(name)
-                                || m.getPlayerB().getName().equalsIgnoreCase(name))
+                .filter(m -> involves(m, name))
                 .toList();
 
         int total = playerMatches.size();
