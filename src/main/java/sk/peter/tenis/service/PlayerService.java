@@ -133,7 +133,7 @@ public class PlayerService {
             throw nf;
         } catch (Exception e) {
             // jednoduché CSV spracovanie – vrátime pôvodný stav
-            throw new RuntimeException("Unable to update player");
+            throw new RuntimeException("Unable to update player", e);
         }
     }
 
@@ -153,7 +153,7 @@ public class PlayerService {
         } catch (NotFoundException nf) {
             throw nf;
         } catch (Exception e) {
-            throw new RuntimeException("Unable to delete player");
+            throw new RuntimeException("Unable to delete player", e);
         }
     }
 }
