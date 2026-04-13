@@ -137,11 +137,16 @@ public class MatchService {
     }
 
     private Player findPlayerByExactName(List<Player> players, String name) {
-        if (name == null) return null;
-        for (Player p : players) {
-            if (p.getName().equalsIgnoreCase(name.trim())) return p;
+        if (name == null) {
+            return null;
         }
-        return null;
+
+        String target = name.trim();
+
+        return players.stream()
+                .filter(p -> p.getName().equalsIgnoreCase(target))
+                .findFirst()
+                .orElse(null);
     }
 
     private boolean matchExists(List<Match> list, Match candidate) {
