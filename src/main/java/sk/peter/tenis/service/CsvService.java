@@ -223,10 +223,10 @@ public final class CsvService {
     // ====================== HELPER METHODS ======================
 
     private static Player findPlayerByExactName(List<Player> players, String name) {
-        for (Player p : players) {
-            if (p.getName().equalsIgnoreCase(name)) return p;
-        }
-        return null;
+        return players.stream()
+                .filter(p -> p.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
     }
 
     private static boolean isValidScore(String score) {
