@@ -61,11 +61,12 @@ public class MatchController {
     @GetMapping
     public ResponseEntity<?> getAllMatches() {
         if (isJpaActive()) {
-            List<MatchResponseDto> out = jpaService.findAll()
-                    .stream()
-                    .map(this::toDto)
-                    .toList();
-            return ResponseEntity.ok(out);
+            return ResponseEntity.ok(
+                    jpaService.findAll()
+                            .stream()
+                            .map(this::toDto)
+                            .toList()
+            );
         }
         return ResponseEntity.ok(csvService.findAll());
     }
