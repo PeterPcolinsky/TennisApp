@@ -44,13 +44,13 @@ public class MatchController {
                 .anyMatch(p -> p.equalsIgnoreCase("mysql"));
     }
 
-    private MatchResponseDto toDto(MatchEntity e) {
+    private MatchResponseDto toDto(MatchEntity match) {
         return new MatchResponseDto(
-                e.getId(),
-                e.getPlayerA().getName(),
-                e.getPlayerB().getName(),
-                e.getResult(),
-                e.getDate()
+                match.getId(),
+                match.getPlayerA().getName(),
+                match.getPlayerB().getName(),
+                match.getResult(),
+                match.getDate()
         );
     }
 
