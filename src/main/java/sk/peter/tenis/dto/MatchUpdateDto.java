@@ -3,8 +3,14 @@ package sk.peter.tenis.dto;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * DTO pre aktualizáciu zápasu: vieme zmeniť score a/alebo date.
- * Pôvodný zápas vyhľadáme podľa playerA, playerB, date, score (query parametre v URL).
+ * DTO used for updating an existing match.
+ *
+ * Allows partial update of match data:
+ * - newScore: updated match result (optional)
+ * - newDate: updated match date in format YYYY-MM-DD (optional)
+ *
+ * The original match is identified by playerA, playerB, score and date
+ * provided as query parameters in the request.
  */
 public class MatchUpdateDto {
 
