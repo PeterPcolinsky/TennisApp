@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 /**
  * Data seeder for loading initial player data from CSV into the database.
@@ -37,7 +38,6 @@ public class DataSeeder {
 
     private final PlayerRepository playerRepository;
 
-    // cestu berieme application.properties
     @Value("${tenis.csv.players:./data/players.csv}")
     private String playersCsvPath;
 
@@ -49,7 +49,7 @@ public class DataSeeder {
     @PostConstruct
     public void seed() throws IOException {
         if (playerRepository.count() > 0) {
-            return; // databáza už má dáta -> neseedujeme znova
+            return;
         }
 
         Path path = Path.of(playersCsvPath);
@@ -63,27 +63,27 @@ public class DataSeeder {
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty()) continue;
-                // očakávaný formát: Meno;Vek;Typ   (napr. "Peter;30;Amatér")
+
                 String[] parts = line.split(";");
                 if (parts.length < 3) continue;
 
                 String name = parts[0].trim();
+
                 int age;
                 try {
                     age = Integer.parseInt(parts[1].trim());
                 } catch (NumberFormatException ex) {
-                    continue; // preskoč riadok s neplatným vekom
+                    continue;
                 }
+
                 PlayerType type = PlayerType.fromInput(parts[2].trim());
                 if (type == null) {
-                    // pokus o fallback: skús bez diakritiky/uppercase
-                    String t = parts[2].trim().toLowerCase();
+                    String t = parts[2].trim().toLowerCase(Locale.ROOT);
                     if (t.startsWith("amat")) type = PlayerType.AMATER;
                     else if (t.startsWith("prof")) type = PlayerType.PROFESIONAL;
                     else continue;
                 }
 
-                // vyhnutie sa duplicitám podľa mena (case-insensitive)
                 if (playerRepository.existsByNameIgnoreCase(name)) continue;
 
                 PlayerEntity entity = new PlayerEntity(name, age, type);
