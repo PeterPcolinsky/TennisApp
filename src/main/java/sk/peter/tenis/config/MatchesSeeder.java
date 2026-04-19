@@ -56,7 +56,7 @@ public class MatchesSeeder {
     @PostConstruct
     public void seed() throws IOException {
         if (matchRepository.count() > 0) {
-            return; // už sú zápasy v DB -> neseedujeme
+            return;
         }
 
         Path path = Path.of(matchesCsvPath);
@@ -71,56 +71,69 @@ public class MatchesSeeder {
 
             while ((line = br.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) continue;
 
-                // preskoč hlavičku, ak tam je
+                if (line.isEmpty()) {
+                    continue;
+                }
+
                 if (!headerProcessed) {
-                    String lower = line.toLowerCase();
-                    if (lower.contains("hrac") || lower.contains("hráč") || lower.contains("vysledok") || lower.contains("výsledok") || lower.contains("datum") || lower.contains("dátum")) {
+                    if (isHeader(line)) {
                         headerProcessed = true;
                         continue;
                     }
-                    // ak prvý riadok NIE je hlavička, ideme ďalej normálne
                     headerProcessed = true;
                 }
 
-                String[] parts = line.split(";");
-                if (parts.length < 4) continue;
-
-                String nameA = parts[0].trim();
-                String nameB = parts[1].trim();
-                String result = parts[2].trim().replace("\"", "");
-                String dateStr = parts[3].trim();
-
-                LocalDate date;
-                try {
-                    date = LocalDate.parse(dateStr); // očakávame ISO formát YYYY-MM-DD
-                } catch (Exception ex) {
-                    // ak by si mal iný formát (napr. DD.MM.YYYY), uprav tento parsing
-                    continue;
-                }
-
-                // nájdi hráčov podľa mena
-                PlayerEntity playerA = playerRepository.findByNameIgnoreCase(nameA).orElse(null);
-                PlayerEntity playerB = playerRepository.findByNameIgnoreCase(nameB).orElse(null);
-                if (playerA == null || playerB == null) {
-                    // hráč neexistuje v DB -> preskoč riadok (alebo zaloguj)
-                    System.out.println("⚠ Preskakujem zápas: neznámy hráč A/B (" + nameA + "/" + nameB + ")");
-                    continue;
-                }
-
-                // vyhnúť sa duplicitám (A vs B v ľubovoľnom poradí v ten istý dátum)
-                boolean dup = matchRepository
-                        .existsByPlayerA_NameIgnoreCaseAndPlayerB_NameIgnoreCaseAndDate(nameA, nameB, date)
-                        || matchRepository
-                        .existsByPlayerB_NameIgnoreCaseAndPlayerA_NameIgnoreCaseAndDate(nameA, nameB, date);
-                if (dup) {
-                    continue;
-                }
-
-                MatchEntity entity = new MatchEntity(playerA, playerB, result, date);
-                matchRepository.save(entity);
+                processLine(line);
             }
         }
+    }
+
+    private boolean isHeader(String line) {
+        String lower = line.toLowerCase();
+        return lower.contains("hrac")
+                || lower.contains("hráč")
+                || lower.contains("vysledok")
+                || lower.contains("výsledok")
+                || lower.contains("datum")
+                || lower.contains("dátum");
+    }
+
+    private void processLine(String line) {
+        String[] parts = line.split(";");
+        if (parts.length < 4) {
+            return;
+        }
+
+        String nameA = parts[0].trim();
+        String nameB = parts[1].trim();
+        String result = parts[2].trim().replace("\"", "");
+        String dateStr = parts[3].trim();
+
+        LocalDate date;
+        try {
+            date = LocalDate.parse(dateStr);
+        } catch (Exception ex) {
+            return;
+        }
+
+        PlayerEntity playerA = playerRepository.findByNameIgnoreCase(nameA).orElse(null);
+        PlayerEntity playerB = playerRepository.findByNameIgnoreCase(nameB).orElse(null);
+
+        if (playerA == null || playerB == null) {
+            System.out.println("⚠ Preskakujem zápas: neznámy hráč A/B (" + nameA + "/" + nameB + ")");
+            return;
+        }
+
+        boolean duplicateMatch =
+                matchRepository.existsByPlayerA_NameIgnoreCaseAndPlayerB_NameIgnoreCaseAndDate(nameA, nameB, date)
+                        || matchRepository.existsByPlayerB_NameIgnoreCaseAndPlayerA_NameIgnoreCaseAndDate(nameA, nameB, date);
+
+        if (duplicateMatch) {
+            return;
+        }
+
+        MatchEntity entity = new MatchEntity(playerA, playerB, result, date);
+        matchRepository.save(entity);
     }
 }
