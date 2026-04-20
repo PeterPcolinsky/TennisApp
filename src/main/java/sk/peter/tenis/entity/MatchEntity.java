@@ -30,11 +30,11 @@ public class MatchEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "player_a_id", nullable = false)
     private PlayerEntity playerA;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "player_b_id", nullable = false)
     private PlayerEntity playerB;
 
