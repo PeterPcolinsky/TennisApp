@@ -1,10 +1,11 @@
 package sk.peter.tenis.entity;
 
 import jakarta.persistence.*;
-import sk.peter.tenis.model.PlayerType;
-import java.io.Serializable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import sk.peter.tenis.model.PlayerType;
+
+import java.io.Serializable;
 
 /**
  * JPA entity representing a tennis player stored in the database.
