@@ -10,7 +10,6 @@ import sk.peter.tenis.repository.PlayerRepository;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * JPA implementation of statistics service.
@@ -129,7 +128,7 @@ public class StatsJpaService {
                         .comparing(LeaderboardDto::getWinRatePercent).reversed()
                         .thenComparing(LeaderboardDto::getMatches).reversed()
                         .thenComparing(LeaderboardDto::getName))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
