@@ -50,8 +50,8 @@ public class StatsJpaService {
      * @return player statistics DTO
      */
     public PlayerStatsDto getPlayerStats(String name, LocalDate from, LocalDate to) {
-        String n = name == null ? null : name.trim();
-        List<MatchEntity> matches = matchRepo.search(n, from, to);
+        String normalizedName = name == null ? null : name.trim();
+        List<MatchEntity> matches = matchRepo.search(normalizedName, from, to);
 
         int wins = 0;
         int losses = 0;
@@ -60,9 +60,9 @@ public class StatsJpaService {
             String winner = winnerName(m);
             if (winner == null) continue;
 
-            if (n != null && n.equalsIgnoreCase(winner)) {
+            if (normalizedName != null && normalizedName.equalsIgnoreCase(winner)) {
                 wins++;
-            } else if (n != null && (n.equalsIgnoreCase(m.getPlayerA().getName()) || n.equalsIgnoreCase(m.getPlayerB().getName()))) {
+            } else if (normalizedName != null && (normalizedName.equalsIgnoreCase(m.getPlayerA().getName()) || normalizedName.equalsIgnoreCase(m.getPlayerB().getName()))) {
                 losses++;
             }
         }
