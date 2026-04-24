@@ -29,6 +29,9 @@ public final class CsvService {
     private static final Path PLAYERS_CSV = DATA_DIR.resolve("players.csv");
     private static final Path MATCHES_CSV = DATA_DIR.resolve("matches.csv");
 
+    private static final String PLAYERS_HEADER = "Meno;Vek;Typ";
+    private static final String MATCHES_HEADER = "HracA;HracB;Vysledok;Datum";
+
     private CsvService() {
     }
 
@@ -58,7 +61,7 @@ public final class CsvService {
 
         if (!Files.exists(PLAYERS_CSV)) {
             try (var w = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
-                w.write("Meno;Vek;Typ");
+                w.write(PLAYERS_HEADER);
                 w.newLine();
             }
             return;
@@ -100,6 +103,7 @@ public final class CsvService {
                         break;
                     }
                 }
+
                 if (!exists) {
                     target.add(new Player(name, age, type));
                 }
@@ -115,9 +119,11 @@ public final class CsvService {
      */
     public static void savePlayers(List<Player> players) throws Exception {
         ensureDataDir();
+
         try (var writer = Files.newBufferedWriter(PLAYERS_CSV, StandardCharsets.UTF_8)) {
-            writer.write("Meno;Vek;Typ");
+            writer.write(PLAYERS_HEADER);
             writer.newLine();
+
             for (Player p : players) {
                 writer.write(p.getName() + ";" + p.getAge() + ";" + p.getType().getDisplayName());
                 writer.newLine();
@@ -153,7 +159,7 @@ public final class CsvService {
 
         if (!Files.exists(MATCHES_CSV)) {
             try (var w = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
-                w.write("HracA;HracB;Vysledok;Datum");
+                w.write(MATCHES_HEADER);
                 w.newLine();
             }
             return;
@@ -181,8 +187,8 @@ public final class CsvService {
 
                 Player a = findPlayerByExactName(players, nameA);
                 Player b = findPlayerByExactName(players, nameB);
-                if (a == null || b == null) continue;
 
+                if (a == null || b == null) continue;
                 if (!isValidScore(score)) continue;
 
                 LocalDate date;
@@ -207,9 +213,11 @@ public final class CsvService {
      */
     public static void saveMatches(List<Match> matches) throws Exception {
         ensureDataDir();
+
         try (var writer = Files.newBufferedWriter(MATCHES_CSV, StandardCharsets.UTF_8)) {
-            writer.write("HracA;HracB;Vysledok;Datum");
+            writer.write(MATCHES_HEADER);
             writer.newLine();
+
             for (Match m : matches) {
                 writer.write(m.getPlayerA().getName() + ";" +
                         m.getPlayerB().getName() + ";" +
@@ -231,8 +239,10 @@ public final class CsvService {
 
     private static boolean isValidScore(String score) {
         String[] sets = score.split(",");
+
         for (String set : sets) {
             set = set.trim();
+
             if (!set.matches("\\d:\\d")) return false;
 
             String[] parts = set.split(":");
@@ -246,6 +256,7 @@ public final class CsvService {
 
             if (!valid) return false;
         }
+
         return true;
     }
 
@@ -254,15 +265,18 @@ public final class CsvService {
             boolean sameOrder =
                     m.getPlayerA().getName().equalsIgnoreCase(a.getName()) &&
                             m.getPlayerB().getName().equalsIgnoreCase(b.getName());
+
             boolean swappedOrder =
                     m.getPlayerA().getName().equalsIgnoreCase(b.getName()) &&
                             m.getPlayerB().getName().equalsIgnoreCase(a.getName());
+
             if ((sameOrder || swappedOrder)
                     && m.getScore().equalsIgnoreCase(score)
                     && m.getDate().equals(date)) {
                 return true;
             }
         }
+
         return false;
     }
 
