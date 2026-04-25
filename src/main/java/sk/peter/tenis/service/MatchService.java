@@ -93,7 +93,7 @@ public class MatchService {
             }
 
             if (max == 7 && min < 5) {
-                throw new IllegalArgumentException("A 7:x set is only allowed as 7:5 or 7:6.");
+                throw new IllegalArgumentException("A 7 games set is only allowed as 7:5 or 7:6.");
             }
 
             if (max > 7) {
