@@ -33,14 +33,6 @@ public class StatsService {
         this.playerRepository = playerRepository;
     }
 
-    /**
-     * Returns statistics for a given player (without a date range).
-     * Uses matches loaded from DB ({@link MatchEntity}).
-     *
-     * @param playerName player name (must not be blank)
-     * @return computed statistics for the given player
-     * @throws IllegalArgumentException if {@code playerName} is null/blank
-     */
     public PlayerStatsDto getStatsForPlayer(String playerName) {
         if (playerName == null || playerName.isBlank()) {
             throw new IllegalArgumentException("Player name must not be empty.");
@@ -69,11 +61,6 @@ public class StatsService {
                 || m.getPlayerB().getName().equalsIgnoreCase(target);
     }
 
-    /**
-     * Builds leaderboard rows from players and matches stored in DB.
-     *
-     * @return leaderboard sorted by win rate (descending)
-     */
     public List<LeaderboardDto> getLeaderboard() {
         try {
             List<PlayerEntity> players = playerRepository.findAll();
@@ -108,15 +95,6 @@ public class StatsService {
         return new LeaderboardDto(name, total, wins, losses, winRate);
     }
 
-    /**
-     * Returns statistics for a given player with an optional date range.
-     * Uses {@link LocalDate} boundaries (inclusive) and matches from DB.
-     *
-     * @param playerName player name (must not be blank)
-     * @param from       start date (inclusive), can be null
-     * @param to         end date (inclusive), can be null
-     * @return computed statistics or {@code null} when input is blank or on error
-     */
     public PlayerStatsDto getPlayerStats(String playerName, LocalDate from, LocalDate to) {
         if (playerName == null || playerName.isBlank()) return null;
 
@@ -125,8 +103,7 @@ public class StatsService {
             final String target = playerName.trim().toLowerCase(Locale.ROOT);
 
             List<MatchEntity> playerMatches = matches.stream()
-                    .filter(m -> m.getPlayerA().getName().equalsIgnoreCase(target)
-                            || m.getPlayerB().getName().equalsIgnoreCase(target))
+                    .filter(m -> involves(m, target))
                     .filter(m ->
                             (from == null || !m.getDate().isBefore(from))
                                     && (to == null || !m.getDate().isAfter(to))
@@ -147,14 +124,6 @@ public class StatsService {
         }
     }
 
-    /**
-     * Calculates win rate in percent (0-100) from wins and losses.
-     * Result is rounded to 1 decimal place.
-     *
-     * @param wins   number of wins
-     * @param losses number of losses
-     * @return win rate percentage (rounded to 1 decimal)
-     */
     public double calcWinRate(int wins, int losses) {
         int finished = wins + losses;
         if (finished == 0) return 0.0;
@@ -163,14 +132,6 @@ public class StatsService {
         return Math.round(raw * 10.0) / 10.0;
     }
 
-    /**
-     * Calculates wins and losses for the given player within the provided match list.
-     * Score parsing is based on set counting (winner is the player with more sets won).
-     *
-     * @param matches       list of matches to evaluate
-     * @param targetLower   player name in lowercase (for comparisons)
-     * @return array {wins, losses}
-     */
     private int[] calculateWinsAndLosses(List<MatchEntity> matches, String targetLower) {
         int wins = 0;
         int losses = 0;
